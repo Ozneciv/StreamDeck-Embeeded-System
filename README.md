@@ -1,8 +1,8 @@
 # 🎛️ StreamDeck-Embeeded-System
 
 <p align="center">
-  <img src="streamdeck_hardware.png" alt="StreamDeck Hardware STM32 BluePill Pronto" width="400" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); margin-right: 10px;">
-  <img src="streamdeck_assembly.jpg" alt="StreamDeck Processo de Montagem e Soldagem" width="400" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+  <img src="streamdeck_hardware.png" alt="StreamDeck Hardware STM32 BluePill Pronto" height="380" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); margin-right: 12px; vertical-align: middle;">
+  <img src="streamdeck_assembly.jpg" alt="StreamDeck Processo de Montagem e Soldagem" height="380" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); vertical-align: middle;">
 </p>
 
 <p align="center">
@@ -112,7 +112,7 @@ StreamDeck-Embeeded-System/
 │   ├── streamdeck_hotkeys.ahk # Script AutoHotkey v2 para atalhos do Windows
 │   └── streamdeck_listener.py# Listener em Python para log de teclado no terminal
 ├── streamdeck_hardware.png   # Foto do hardware finalizado
-└── streamdeck_assembly.jpg   # Foto do processo de soldagem e montagem
+└── streamdeck_assembly.jpg   # Foto do processo de soldagem e montagem (proporção 3:4)
 ```
 
 ---
