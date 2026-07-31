@@ -1,0 +1,14 @@
+# STM32CubeIDE / Eclipse build outputs
+streamdeck bluepill/Debug/
+*.o
+*.su
+*.d
+*.elf
+*.hex
+*.bin
+*.map
+
+# OS & Temp files
+.DS_Store
+Thumbs.db
+*.tmp
