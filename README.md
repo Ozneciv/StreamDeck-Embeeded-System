@@ -7,7 +7,7 @@
 
 <p align="center">
   <strong>Macro Pad Físico de 9 Botões baseado em STM32F103C8T6 (BluePill) e USB Custom HID</strong><br>
-  Interface de controle e simulação desenvolvida em <strong>Python 3</strong><br>
+  Interface Gráfica Desktop 100% desenvolvida em <strong>Python 3 (Tkinter GUI)</strong><br>
   Projeto acadêmico para a disciplina de <strong>Sistemas Embarcados I</strong><br>
   <strong>FEELT</strong> — Faculdade de Engenharia Elétrica | <strong>UFU</strong> — Universidade Federal de Uberlândia
 </p>
@@ -31,7 +31,7 @@ O **StreamDeck-Embeeded-System** é um dispositivo de entrada físico (*Macro Pa
 
 O dispositivo se comunica nativamente com o computador via **USB Custom HID (Human Interface Device)**, transmitindo relatórios de 8 bytes com scancodes estendidos de **F13 a F21** (`0x68` a `0x70` em Hexadecimal). Como a classe USB HID é suportada nativamente pelo sistema operacional, o dispositivo funciona em modo **Plug-and-Play**, sem a necessidade de instalar drivers externos ou abrir portas seriais (USART/UART).
 
-A aplicação conta com uma **Interface Gráfica e Servidor desenvolvidos em Python 3**, que exibem em tempo real o acionamento de cada tecla, osciloscópio de sinais GPIO, inspeção do pacote de 8 Bytes USB e métricas do microcontrolador.
+A aplicação de acompanhamento é uma **Interface Gráfica Desktop desenvolvida 100% em Python 3**, que exibe em tempo real o acionamento de cada tecla, telemetria dos pinos GPIO, inspeção do pacote de 8 Bytes USB e métricas da arquitetura do microcontrolador.
 
 ---
 
@@ -62,7 +62,7 @@ O projeto inclui o desenvolvimento completo do esquemático elétrico e do layou
 
 | Botão | Tecla HID | Hex Code | Linha (GND Out) | Coluna (PullUp In) | Ação na Interface Python |
 | :---: | :---: | :---: | :---: | :---: | :--- |
-| **#1** | **F13** | `0x68` | PA1 | PA4 | Soundboard SFX (Sintetizador Web Audio) |
+| **#1** | **F13** | `0x68` | PA1 | PA4 | Soundboard SFX (Vinheta de Áudio) |
 | **#2** | **F14** | `0x69` | PA1 | PA5 | Mutar / Desmutar Microfone (Estúdio On-Air) |
 | **#3** | **F15** | `0x6A` | PA1 | PA6 | Alternar Cenas (Slide / Webcam / STM32 Code) |
 | **#4** | **F16** | `0x6B` | PA2 | PA4 | Iniciar / Pausar Cronômetro da Apresentação |
@@ -74,21 +74,16 @@ O projeto inclui o desenvolvimento completo do esquemático elétrico e do layou
 
 ---
 
-## 🐍 Interface & Aplicação Python
+## 🐍 Como Executar a Interface em Python 3
 
-A aplicação de acompanhamento foi desenvolvida em **Python 3** e pode ser executada de duas formas:
+A aplicação de acompanhamento foi desenvolvida **100% em Python 3** (utilizando a biblioteca GUI `tkinter`).
 
-### 1. Servidor de Aplicação Python (`app.py`)
-Inicia um servidor web nativo Python e abre o Dashboard de telemetria no navegador:
+### Execução Direta:
 ```bash
 python app.py
 ```
 
-### 2. Interface Gráfica Desktop Tkinter (`dashboard/gui_python.py`)
-Executa uma aplicação nativa de desktop em Python com a grade 3x3 e log de eventos:
-```bash
-python dashboard/gui_python.py
-```
+Uma janela nativa desktop em Python será aberta com a matriz 3x3 interativa, telemetria de pinos GPIO e log de eventos em tempo real.
 
 ---
 
@@ -96,7 +91,7 @@ python dashboard/gui_python.py
 
 ```text
 StreamDeck-Embeeded-System/
-├── app.py                    # Aplicação principal em Python (Servidor de Interface)
+├── app.py                    # Aplicação nativa Desktop em Python (Tkinter GUI)
 ├── streamdeck bluepill/      # Projeto em C do STM32CubeIDE (Firmware da STM32)
 │   ├── Core/
 │   │   ├── Inc/              # Cabeçalhos main.h, usb_device.h, etc.
@@ -110,12 +105,9 @@ StreamDeck-Embeeded-System/
 │       ├── sch_macropad_plote.pdf # Esquemático elétrico em PDF
 │       ├── PCB_macropad.kicad_pcb # Layout da PCB
 │       └── gerber/           # Gerbers para fabricação
-├── dashboard/                # Interface Gráfica em Python / Web Dashboard
-│   ├── gui_python.py         # Interface Desktop nativa em Python (Tkinter)
-│   ├── index.html            # Interface web (FEELT / UFU)
-│   ├── styles.css            # Estilos Cyberpunk / Glassmorphism
-│   ├── app.js                # Lógica visual e osciloscópio de sinais
-│   └── ufu_logo.svg          # Logo vetorial oficial da UFU
+├── dashboard/                # Módulo Python da Interface Desktop
+│   ├── app_python.py         # Código-fonte Python da interface gráfica
+│   └── gui_python.py         # Módulo Tkinter GUI
 ├── integracoes/              # Scripts auxiliares do Windows
 │   ├── streamdeck_hotkeys.ahk # Script AutoHotkey v2 para atalhos do Windows
 │   └── streamdeck_listener.py# Listener em Python para log de teclado no terminal
