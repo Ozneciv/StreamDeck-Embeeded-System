@@ -7,7 +7,7 @@
 
 <p align="center">
   <strong>Macro Pad Físico de 9 Botões baseado em STM32F103C8T6 (BluePill) e USB Custom HID</strong><br>
-  Interface Gráfica Desktop 100% desenvolvida em <strong>Python 3 (Tkinter GUI)</strong><br>
+  Interface de controle e simulação desenvolvida em <strong>Python 3</strong><br>
   Projeto acadêmico para a disciplina de <strong>Sistemas Embarcados I</strong><br>
   <strong>FEELT</strong> — Faculdade de Engenharia Elétrica | <strong>UFU</strong> — Universidade Federal de Uberlândia
 </p>
@@ -31,7 +31,7 @@ O **StreamDeck-Embeeded-System** é um dispositivo de entrada físico (*Macro Pa
 
 O dispositivo se comunica nativamente com o computador via **USB Custom HID (Human Interface Device)**, transmitindo relatórios de 8 bytes com scancodes estendidos de **F13 a F21** (`0x68` a `0x70` em Hexadecimal). Como a classe USB HID é suportada nativamente pelo sistema operacional, o dispositivo funciona em modo **Plug-and-Play**, sem a necessidade de instalar drivers externos ou abrir portas seriais (USART/UART).
 
-A aplicação de acompanhamento é uma **Interface Gráfica Desktop desenvolvida 100% em Python 3**, que exibe em tempo real o acionamento de cada tecla, telemetria dos pinos GPIO, inspeção do pacote de 8 Bytes USB e métricas da arquitetura do microcontrolador.
+A aplicação de acompanhamento é iniciada por um **Servidor de Aplicação em Python 3 (`app.py`)**, que abre a interface gráfica interativa exibindo em tempo real o acionamento de cada tecla, osciloscópio de sinais GPIO, inspeção do pacote de 8 Bytes USB e métricas da arquitetura do microcontrolador.
 
 ---
 
@@ -76,14 +76,13 @@ O projeto inclui o desenvolvimento completo do esquemático elétrico e do layou
 
 ## 🐍 Como Executar a Interface em Python 3
 
-A aplicação de acompanhamento foi desenvolvida **100% em Python 3** (utilizando a biblioteca GUI `tkinter`).
+A aplicação de acompanhamento é executada via **Python 3**:
 
-### Execução Direta:
 ```bash
 python app.py
 ```
 
-Uma janela nativa desktop em Python será aberta com a matriz 3x3 interativa, telemetria de pinos GPIO e log de eventos em tempo real.
+O servidor em Python iniciará a aplicação e abrirá automaticamente a interface completa de monitoramento em tempo real.
 
 ---
 
@@ -91,7 +90,7 @@ Uma janela nativa desktop em Python será aberta com a matriz 3x3 interativa, te
 
 ```text
 StreamDeck-Embeeded-System/
-├── app.py                    # Aplicação nativa Desktop em Python (Tkinter GUI)
+├── app.py                    # Aplicação de Servidor em Python 3
 ├── streamdeck bluepill/      # Projeto em C do STM32CubeIDE (Firmware da STM32)
 │   ├── Core/
 │   │   ├── Inc/              # Cabeçalhos main.h, usb_device.h, etc.
@@ -105,9 +104,11 @@ StreamDeck-Embeeded-System/
 │       ├── sch_macropad_plote.pdf # Esquemático elétrico em PDF
 │       ├── PCB_macropad.kicad_pcb # Layout da PCB
 │       └── gerber/           # Gerbers para fabricação
-├── dashboard/                # Módulo Python da Interface Desktop
-│   ├── app_python.py         # Código-fonte Python da interface gráfica
-│   └── gui_python.py         # Módulo Tkinter GUI
+├── dashboard/                # Interface Gráfica da Aplicação
+│   ├── index.html            # Dashboard visual (FEELT / UFU)
+│   ├── styles.css            # Estilos Cyberpunk / Glassmorphic
+│   ├── app.js                # Lógica de interatividade e osciloscópio
+│   └── ufu_logo.svg          # Logo vetorial oficial da UFU
 ├── integracoes/              # Scripts auxiliares do Windows
 │   ├── streamdeck_hotkeys.ahk # Script AutoHotkey v2 para atalhos do Windows
 │   └── streamdeck_listener.py# Listener em Python para log de teclado no terminal
