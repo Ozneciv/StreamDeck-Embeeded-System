@@ -15,6 +15,7 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{float}
+\usepackage{microtype} % Previne qualquer estouro de margem de texto
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows, positioning}
 
@@ -90,7 +91,7 @@
     % 3. LINHA SUPERIOR E TÍTULO PRINCIPAL
     {\color{primaryblue}\rule{\linewidth}{1.0pt}}\\[0.4cm]
     {\Large \bfseries \color{primaryblue} RELATÓRIO TÉCNICO \& MEMORIAL DESCRITIVO}\\[0.3cm]
-    {\normalsize \bfseries STREAM DECK EMBARCADO COM VARREDURA POR INTERRUPÇÃO DE TIMER, PCB FACE SIMPLES E NATIVA USB HID}\\[0.4cm]
+    {\normalsize \bfseries STREAM DECK EMBARCADO COM INTERRUPÇÃO DE TIMER, PCB FACE SIMPLES E USB HID}\\[0.4cm]
     {\color{primaryblue}\rule{\linewidth}{1.0pt}}\\[1.8cm]
 
     % 4. BLOCO DOS INTEGRANTES E DOCENTE
@@ -151,11 +152,11 @@ O projeto proporcionou a aplicação de conhecimentos relacionados à programaç
 
 \subsection{Objetivos Específicos}
 \begin{itemize}
-    \item Implementar a programação do microcontrolador responsável pelo gerenciamento das entradas por meio de \textbf{Interrupção de Timer de Hardware (TIM2 a 100~Hz)}, eliminando o \textit{polling} no loop principal com a instrução \texttt{\_\_WFI()}.
-    \item Implementar a **re-enumeração USB automática por software** na inicialização (pino \texttt{PA12}) para forçar a identificação limpa no Windows/Linux após gravações via ST-LINK.
-    \item Corrigir os limites de memória da biblioteca ST USB Custom HID, ajustando o tamanho do relatório (\texttt{USBD\_CUSTOM\_HID\_REPORT\_DESC\_SIZE = 63}) e dos Endpoints IN/OUT (\texttt{CUSTOM\_HID\_EPIN\_SIZE = 8}), eliminando 61 avisos de estouro de array no compilador GCC.
-    \item Especificar a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional com encaixe $14\,\text{mm} \times 14\,\text{mm}$).
-    \item Desenvolver a PCB no KiCad em \textbf{Face Simples (Single Layer \texttt{B.Cu})} com trilhas engrossadas ($0.8\,\text{mm}$ a $1.2\,\text{mm}$) para permitir a fabricação manual por corrosão em Percloreto de Ferro.
+    \item Implementar a programação do microcontrolador por meio de \textbf{Interrupção de Timer de Hardware (TIM2 a 100~Hz)}, eliminando o \textit{polling} no loop principal via instrução \texttt{\_\_WFI()}.
+    \item Implementar a re-enumeração USB automática por software na inicialização (pino \texttt{PA12}) para forçar a identificação limpa no sistema operacional.
+    \item Corrigir os limites de memória da biblioteca ST USB Custom HID, ajustando o tamanho do relatório (\texttt{USBD\_CUSTOM\_HID\_REPORT\_DESC\_SIZE = 63}) e dos Endpoints IN/OUT (\texttt{CUSTOM\_HID\_EPIN\_SIZE = 8}).
+    \item Especificar a compatibilidade mecânica dos switches (padrão Cherry MX / Outemu Blue de 3 pinos com encaixe $14\,\text{mm} \times 14\,\text{mm}$).
+    \item Desenvolver a PCB no KiCad em \textbf{Face Simples (Single Layer \texttt{B.Cu})} com trilhas engrossadas ($0.8\,\text{mm}$ a $1.2\,\text{mm}$) para corrosão manual.
     \item Habilitar o suporte de depuração SWD em modo Sleep via \texttt{HAL\_DBGMCU\_EnableDBGSleepMode()}.
     \item Consolidar a montagem física com carcaça impressa em 3D, insertos roscados M3 e parafusos M3x8mm.
 \end{itemize}
@@ -208,36 +209,36 @@ Outro aspecto importante do projeto é a integração entre os componentes mecâ
 \label{fig:esquematico}
 \end{figure}
 
-% --- IMAGENS DA PCB LADO A LADO ---
+% --- NOVAS FOTOS DA PCB LADO A LADO ---
 \begin{figure}[H]
 \centering
 \begin{subfigure}[b]{0.48\textwidth}
     \centering
-    \IfFileExists{pcb_3d_kicad.png}{
-      \includegraphics[width=\textwidth]{pcb_3d_kicad.png}
+    \IfFileExists{pcb_top_3d.png}{
+      \includegraphics[width=\textwidth]{pcb_top_3d.png}
     }{
-      \IfFileExists{emmaos.jpeg}{\includegraphics[width=\textwidth]{emmaos.jpeg}}{\includegraphics[width=\textwidth]{streamdeck_hardware.png}}
+      \IfFileExists{pcb_3d_kicad.png}{\includegraphics[width=\textwidth]{pcb_3d_kicad.png}}{\includegraphics[width=\textwidth]{streamdeck_hardware.png}}
     }
-    \caption{Visualização 3D Superior da PCB.}
-    \label{fig:pcb3d_sub}
+    \caption{Vista 3D Superior (Diodos e Soquetes MX).}
+    \label{fig:pcb_top_sub}
 \end{subfigure}
 \hfill
 \begin{subfigure}[b]{0.48\textwidth}
     \centering
-    \IfFileExists{pcb_layout_kicad.png}{
-      \includegraphics[width=\textwidth]{pcb_layout_kicad.png}
+    \IfFileExists{pcb_bottom_3d.png}{
+      \includegraphics[width=\textwidth]{pcb_bottom_3d.png}
     }{
-      \IfFileExists{montage.jpg}{\includegraphics[width=\textwidth]{montage.jpg}}{\includegraphics[width=\textwidth]{streamdeck_assembly.jpg}}
+      \IfFileExists{pcb_layout_kicad.png}{\includegraphics[width=\textwidth]{pcb_layout_kicad.png}}{\includegraphics[width=\textwidth]{streamdeck_assembly.jpg}}
     }
-    \caption{Roteamento Single-Layer (\texttt{B.Cu}).}
-    \label{fig:pcblayout_sub}
+    \caption{Vista 3D Inferior (Roteamento B.Cu).}
+    \label{fig:pcb_bottom_sub}
 \end{subfigure}
-\caption{Projeto e renderização da Placa de Circuito Impresso no KiCad dispostos lado a lado.}
-\label{fig:pcb_lado_a_lado}
+\caption{Visualização 3D da Placa de Circuito Impresso no KiCad (Vista Superior e Inferior).}
+\label{fig:pcb_3d_novas_lado_a_lado}
 \end{figure}
 
 \subsection{Configuração do Timer TIM2 e NVIC no STM32CubeMX}
-\hspace*{1.25cm}Após a definição do circuito eletrônico, realizou-se a configuração do timer de hardware **TIM2** e do controlador de interrupções (NVIC) no STM32CubeMX:
+\hspace*{1.25cm}Após a definição do circuito eletrônico, realizou-se a configuração do timer de hardware \textbf{TIM2} e do controlador de interrupções (NVIC) no STM32CubeMX:
 \begin{itemize}
     \item \textbf{Clock de Entrada do Timer (APB1 Timer Clock):} $72\,\text{MHz}$.
     \item \textbf{Prescaler (PSC):} $7199$. A frequência de contagem do timer resulta em:
@@ -284,13 +285,15 @@ As portas GPIO foram alocadas da seguinte forma:
 \subsection{Otimizações Avançadas de Firmware e Pilha USB}
 \hspace*{1.25cm}Durante os testes práticos com o protótipo montado, foram implementadas quatro otimizações fundamentais de engenharia no firmware:
 
-\begin1. \textbf{Re-enumeração USB D+ por Software:} Como as placas BluePill não possuem circuito transistorizado na linha \texttt{USB\_DP} (\texttt{PA12}), adicionou-se um pulso de desconexão forçada por software em \texttt{main.c} antes de iniciar a pilha USB. O pino \texttt{PA12} é forçado a nível baixo ($0\,\text{V}$) por $100\,\text{ms}$, fazendo com que o sistema operacional hospedeiro invalide a sessão antiga e re-enumere o dispositivo de forma automática imediatamente após a gravação via ST-LINK.
-\textbf{Correção nos Endpoints USB Custom HID:} Corrigiu-se o tamanho de memória dos buffers de transferência. O tamanho do relatório (\texttt{USBD\_CUSTOM\_HID\_REPORT\_DESC\_SIZE}) foi atualizado de 2 para 63 bytes em \texttt{usbd\_conf.h} e \texttt{.ioc}, eliminando 61 avisos de compilação (*excess elements in array initializer*). Adicionalmente, o tamanho dos Endpoints de transferência (\texttt{CUSTOM\_HID\_EPIN\_SIZE} e \texttt{CUSTOM\_HID\_EPOUT\_SIZE}) foi expandido para 8 Bytes (\texttt{0x08U}), garantindo o envio completo do pacote de relatório de teclado padrão.
-\textbf{Suporte à Depuração ST-LINK em Modo Sleep:} Ao colocar a CPU em repouso com \texttt{\_\_WFI()}, o relógio do gravador SWD era interrompido. A inclusão do comando \texttt{HAL\_DBGMCU\_EnableDBGSleepMode()} no ciclo de inicialização permitiu manter a depuração em tempo real ativa no STM32CubeIDE mesmo com a CPU em baixo consumo.
-\textbf{Micro-delay de Estabilização Elétrica na Matriz:} Na função \texttt{scanMatrix_ISR()}, foi introduzido um pequeno atraso de 50 ciclos \texttt{\_\_NOP()} após o comutamento de cada linha para nível baixo, permitindo a descarga completa da capacitância parasita acumulada nas trilhas de cobre da PCB artesanal.
+\begin{enumerate}
+    \item \textbf{Re-enumeração USB D+ por Software:} Como as placas BluePill não possuem circuito transistorizado na linha \texttt{USB\_DP} (\texttt{PA12}), adicionou-se um pulso de desconexão forçada por software em \texttt{main.c} antes de iniciar a pilha USB. O pino \texttt{PA12} é forçado a nível baixo ($0\,\text{V}$) por $100\,\text{ms}$, fazendo com que o sistema operacional hospedeiro invalide a sessão antiga e re-enumere o dispositivo de forma automática imediatamente após a gravação via ST-LINK.
+    \item \textbf{Correção nos Endpoints USB Custom HID:} Corrigiu-se o tamanho de memória dos buffers de transferência. O tamanho do relatório (\texttt{USBD\_CUSTOM\_HID\_REPORT\_DESC\_SIZE}) foi atualizado de 2 para 63 bytes em \texttt{usbd\_conf.h} e \texttt{.ioc}, eliminando 61 avisos de compilação (\textit{excess elements in array initializer}). Adicionalmente, o tamanho dos Endpoints de transferência (\texttt{CUSTOM\_HID\_EPIN\_SIZE} e \texttt{CUSTOM\_HID\_EPOUT\_SIZE}) foi expandido para 8 Bytes (\texttt{0x08U}), garantindo o envio completo do pacote de relatório de teclado padrão.
+    \item \textbf{Suporte à Depuração ST-LINK em Modo Sleep:} Ao colocar a CPU em repouso com \texttt{\_\_WFI()}, o relógio do gravador SWD era interrompido. A inclusão da função \texttt{HAL\_DBGMCU\_EnableDBGSleepMode()} no ciclo de inicialização permitiu manter a depuração em tempo real ativa no STM32CubeIDE mesmo com a CPU em baixo consumo.
+    \item \textbf{Micro-delay de Estabilização Elétrica na Matriz:} Na função \texttt{scanMatrix\_ISR()}, foi introduzido um pequeno atraso de 50 ciclos \texttt{\_\_NOP()}, evitando falsos acionamentos por capacitância parasita acumulada nas trilhas da PCB artesanal.
+\end{enumerate}
 
 \subsection{Varredura da Matriz por Interrupção de Timer (TIM2)}
-\hspace*{1.25cm}Para atender integralmente à exigência de eliminar o \textit{polling} no \texttt{while(1)}, o timer de hardware \textbf{TIM2} dispara a interrupção periódica a cada **10 ms (100 Hz)**, executando a callback \texttt{HAL\_TIM\_PeriodElapsedCallback()} que realiza a amostragem e a máquina de estados de debouncing de 40 ms. O loop principal permanece 100\% ocioso em \texttt{\_\_WFI()}.
+\hspace*{1.25cm}Para atender integralmente à exigência de eliminar o \textit{polling} no \texttt{while(1)}, o timer de hardware \textbf{TIM2} dispara a interrupção periódica a cada 10 ms (100 Hz), executando a callback \texttt{HAL\_TIM\_PeriodElapsedCallback()} que realiza a amostragem e a máquina de estados de debouncing de 40 ms. O loop principal permanece 100\% ocioso em \texttt{\_\_WFI()}.
 
 \begin{figure}[H]
 \centering
@@ -383,7 +386,7 @@ int main(void) {
     SystemClock_Config();
 
     /* USER CODE BEGIN SysInit */
-    // Reset forçado da linha USB D+ (PA12) para re-enumeração no Windows
+    // Reset forcado da linha USB D+ (PA12) para re-enumeracao no Windows
     GPIO_InitTypeDef GPIO_InitStruct_USB = {0};
     __HAL_RCC_GPIOA_CLK_ENABLE();
     GPIO_InitStruct_USB.Pin = GPIO_PIN_12;
@@ -393,7 +396,7 @@ int main(void) {
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
     HAL_Delay(100);
 
-    /* Habilita depuração SWD mesmo com CPU em modo repouso __WFI */
+    /* Habilita depuracao SWD mesmo com CPU em modo repouso __WFI */
     HAL_DBGMCU_EnableDBGSleepMode();
     /* USER CODE END SysInit */
 

@@ -3,10 +3,10 @@
 ==============================================================================
  GERADOR DO RELATÓRIO TÉCNICO OFICIAL STREAM DECK UFU/FEELT (PDF)
 ==============================================================================
- Renderiza o documento PDF completo (14 páginas) integrando todas as figuras
- do projeto (Fotos do Hardware, Montagem, KiCad PCB Face Simples B.Cu,
- STM32CubeMX, Interrupção de Timer TIM2, parágrafos ABNT com recuo de 1,25cm
- e tabelas de custos).
+ Renderiza o documento PDF completo integrando as 2 novas imagens da PCB em 3D
+ (Vista Superior e Vista Inferior), as fotos do Hardware, Montagem, KiCad PCB
+ Face Simples B.Cu, STM32CubeMX, Interrupção de Timer TIM2, parágrafos ABNT com
+ recuo de 1,25cm e tabelas de custos.
 """
 
 import os
@@ -129,7 +129,7 @@ def build_pdf_report(pdf_filename):
         leading=13.5,
         textColor=c_text,
         alignment=4,
-        firstLineIndent=35, # Recuo ABNT de 1,25 cm
+        firstLineIndent=35,
         spaceAfter=6
     )
 
@@ -255,17 +255,28 @@ def build_pdf_report(pdf_filename):
     story.append(Paragraph("5.1 Projeto Eletrônico no KiCad (PCB Face Simples Manual)", style_h2))
     story.append(Paragraph("A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétrico e do layout da placa de circuito impresso utilizando o software KiCad. Atendendo à solicitação do professor, o layout da placa foi desenvolvido exclusivamente na <b>camada inferior de cobre (<code>B.Cu</code> - Face Simples)</b>, facilitando o processo de confecção artesanal por transferência térmica. As trilhas foram engrossadas para larguras entre <b>0,8 mm (31,5 mils)</b> e <b>1,2 mm (47,2 mils)</b> com espaçamento de segurança de <b>0,5 mm</b>, eliminando riscos de rompimento ou curto-circuito na corrosão por Percloreto de Ferro.", style_body))
 
-    # Embed Images if present
-    hw_img_path = os.path.join(os.path.dirname(__file__), 'emmaos.jpeg')
-    assembly_img_path = os.path.join(os.path.dirname(__file__), 'montage.jpg')
+    # 2 Novas Imagens 3D da PCB lado a lado
+    top_3d_path = os.path.join(os.path.dirname(__file__), 'pcb_top_3d.png')
+    bottom_3d_path = os.path.join(os.path.dirname(__file__), 'pcb_bottom_3d.png')
 
-    if os.path.exists(hw_img_path):
-        story.append(Image(hw_img_path, width=340, height=453))
-        story.append(Paragraph("Figura 1 — Protótipo físico finalizado do Stream Deck em carcaça impressa 3D.", style_caption))
-
-    if os.path.exists(assembly_img_path):
-        story.append(Image(assembly_img_path, width=340, height=453))
-        story.append(Paragraph("Figura 2 — Processo de soldagem e montagem física dos switches mecânicos e diodos 1N4148.", style_caption))
+    if os.path.exists(top_3d_path) and os.path.exists(bottom_3d_path):
+        pcb_table_data = [
+            [
+                Image(top_3d_path, width=230, height=205),
+                Image(bottom_3d_path, width=230, height=205)
+            ],
+            [
+                Paragraph("<b>(a) Vista 3D Superior (Diodos e Soquetes MX)</b>", style_caption),
+                Paragraph("<b>(b) Vista 3D Inferior (Roteamento B.Cu)</b>", style_caption)
+            ]
+        ]
+        t_pcb_3d = Table(pcb_table_data, colWidths=[240, 240])
+        t_pcb_3d.setStyle(TableStyle([
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]))
+        story.append(t_pcb_3d)
+        story.append(Paragraph("Figura 2 — Visualização 3D da Placa de Circuito Impresso no KiCad (Vista Superior e Inferior).", style_caption))
 
     story.append(Paragraph("5.2 Configuração e Programação no STM32CubeMX", style_h2))
     story.append(Paragraph("As portas GPIO foram configuradas da seguinte forma no STM32CubeMX:<br/>• <b>Linhas (LINE_1 a LINE_3):</b> Pinos PA1, PA2, PA3 configurados como <code>GPIO_MODE_OUTPUT_OD</code> (Open Drain).<br/>• <b>Colunas (COL_1 a COL_3):</b> Pinos PA4, PA5, PA6 configurados como <code>GPIO_MODE_INPUT</code> com <code>GPIO_PULLUP</code> interno.<br/>• <b>Comunicação USB HID:</b> Pinos PA11 (USB_DM) e PA12 (USB_DP) na classe Custom HID.<br/>• <b>Gravador SWD:</b> Pinos PA13 (SYS_JTMS-SWDIO) e PA14 (SYS_JTCK-SWCLK).", style_body))
@@ -298,6 +309,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 int main(void) {
     HAL_Init();
     SystemClock_Config();
+
+    // Reset forcado da linha USB D+ (PA12) para re-enumeracao no Windows
+    GPIO_InitTypeDef GPIO_InitStruct_USB = {0};
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    GPIO_InitStruct_USB.Pin = GPIO_PIN_12;
+    GPIO_InitStruct_USB.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct_USB.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct_USB);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
+    HAL_Delay(100);
+
+    HAL_DBGMCU_EnableDBGSleepMode(); // Habilita depuracao SWD em modo Sleep
+
     MX_GPIO_Init();
     MX_USB_DEVICE_Init();
     MX_TIM2_Init();
@@ -312,6 +336,18 @@ int main(void) {
 
     story.append(Paragraph("5.4 Montagem Física do Protótipo", style_h2))
     story.append(Paragraph("Após a definição do circuito eletrônico e da programação do microcontrolador, foi realizada a montagem física do Stream Deck. Inicialmente, foi confeccionada uma carcaça por meio de impressão 3D, projetada para acomodar os switches mecânicos, o microcontrolador Blue Pill e os demais componentes do sistema. Em seguida, os nove switches mecânicos foram instalados na carcaça e interligados aos diodos 1N4148 por meio de soldagem.", style_body))
+
+    # Embed Hardware Photos
+    hw_img_path = os.path.join(os.path.dirname(__file__), 'emmaos.jpeg')
+    assembly_img_path = os.path.join(os.path.dirname(__file__), 'montage.jpg')
+
+    if os.path.exists(hw_img_path):
+        story.append(Image(hw_img_path, width=340, height=453))
+        story.append(Paragraph("Figura 3 — Protótipo físico finalizado do Stream Deck em carcaça impressa 3D.", style_caption))
+
+    if os.path.exists(assembly_img_path):
+        story.append(Image(assembly_img_path, width=340, height=453))
+        story.append(Paragraph("Figura 4 — Processo de soldagem e montagem física dos switches mecânicos e diodos 1N4148.", style_caption))
 
     # 6. CUSTOS
     story.append(Paragraph("6. Análise de Custos", style_h1))
