@@ -79,7 +79,7 @@
 \begin{titlepage}
     \centering
     
-    % 1. LOGO DA UFU (Ajuste a largura em width)
+    % 1. LOGO DA UFU
     \IfFileExists{ufu_logo.png}{\includegraphics[width=4.5cm]{ufu_logo.png}}{\includegraphics[width=4.0cm]{dashboard/ufu_logo.png}}\\[0.4cm]
     
     % 2. CABEÇALHO INSTITUCIONAL
@@ -87,13 +87,13 @@
     {\bfseries \large FACULDADE DE ENGENHARIA ELÉTRICA — FEELT}\\[0.1cm]
     {\small DISCIPLINA DE SISTEMAS EMBARCADOS I}\\[1.5cm]
 
-    % 3. LINHA SUPERIOR E TÍTULO PRINCIPAL (Altere a cor ou tamanho)
+    % 3. LINHA SUPERIOR E TÍTULO PRINCIPAL
     {\color{primaryblue}\rule{\linewidth}{1.0pt}}\\[0.4cm]
     {\Large \bfseries \color{primaryblue} RELATÓRIO TÉCNICO \& MEMORIAL DESCRITIVO}\\[0.3cm]
-    {\normalsize \bfseries STREAM DECK EMBARCADO COM INTERRUPÇÃO DE TIMER, PCB FACE SIMPLES E USB HID}\\[0.4cm]
+    {\normalsize \bfseries STREAM DECK EMBARCADO COM VARREDURA POR INTERRUPÇÃO DE TIMER, PCB FACE SIMPLES E NATIVA USB HID}\\[0.4cm]
     {\color{primaryblue}\rule{\linewidth}{1.0pt}}\\[1.8cm]
 
-    % 4. BLOCO DOS INTEGRANTES E DOCENTE (Alinhados em colunas)
+    % 4. BLOCO DOS INTEGRANTES E DOCENTE
     \begin{minipage}{0.5\textwidth}
         \begin{flushleft} \large
             \textbf{Discentes / Integrantes:}\\[0.2cm]
@@ -123,7 +123,9 @@
 % RESUMO
 % ==============================================================================
 \section*{Resumo}
-\hspace*{1.25cm}Este relatório apresenta o desenvolvimento, implementação e validação de um periférico de entrada dedicado (\textit{Stream Deck / Macro Pad}) baseado no microcontrolador ARM Cortex-M3 (STM32F103C8T6 - Blue Pill). O dispositivo é composto por uma matriz 3x3 de teclas mecânicas acopladas a diodos anti-ghosting $1\text{N}4148$, operando nativamente como protocolo USB Custom HID (\textit{Human Interface Device}). O relatório especifica a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional). Em estrito atendimento às recomendações da banca, a arquitetura do firmware foi totalmente reformulada para operar \textbf{100\% sob Interrupção de Hardware por Timer (TIM2 a 100~Hz / 10~ms)} com filtro de debouncing por máquina de estados, eliminando o uso ineficiente de \textit{polling} no loop principal. Adicionalmente, a placa de circuito impresso (PCB) foi projetada no KiCad em \textbf{camada única (Face Simples \texttt{B.Cu})} com trilhas engrossadas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$, viabilizando a corrosão artesanal manual com Percloreto de Ferro.
+\hspace*{1.25cm}Este relatório apresenta o desenvolvimento, implementação e validação de um periférico de entrada dedicado (\textit{Stream Deck / Macro Pad}) baseado no microcontrolador ARM Cortex-M3 (STM32F103C8T6 - Blue Pill). O dispositivo é composto por uma matriz 3x3 de teclas mecânicas acopladas a diodos anti-ghosting $1\text{N}4148$, operando nativamente como protocolo USB Custom HID (\textit{Human Interface Device}). O relatório especifica a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional). Em estrito atendimento às recomendações da banca, a arquitetura do firmware foi totalmente reformulada para operar \textbf{100\% sob Interrupção de Hardware por Timer (TIM2 a 100~Hz / 10~ms)} com filtro de debouncing por máquina de estados, desativação de \textit{polling} no loop principal via instrução \texttt{\_\_WFI()}, re-enumeração USB automática por software em \texttt{PA12}, otimizações no tamanho dos Endpoints de relatório USB HID para 8 Bytes e suporte à depuração ST-LINK em baixa potência (\texttt{DBGMCU}). Adicionalmente, a placa de circuito impresso (PCB) foi projetada no KiCad em \textbf{camada única (Face Simples \texttt{B.Cu})} com trilhas engrossadas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$, viabilizando a corrosão artesanal manual com Percloreto de Ferro.
+
+\textbf{Palavras-chave:} Sistemas Embarcados, STM32F103C8T6, USB Custom HID, Interrupção por Timer (TIM2), Re-enumeração USB, PCB Face Simples.
 
 \newpage
 \tableofcontents
@@ -133,7 +135,7 @@
 % 1. INTRODUÇÃO
 % ==============================================================================
 \section{Introdução}
-\hspace*{1.25cm} Os sistemas embarcados estão presentes em diversas aplicações tecnológicas, desempenhando funções específicas por meio da integração entre hardware e software. Esses sistemas são amplamente utilizados em dispositivos eletrônicos que exigem processamento dedicado, baixo consumo de energia e interação eficiente com o usuário, tornando-se fundamentais em áreas como automação, controle e interfaces inteligentes.
+\hspace*{1.25cm}Os sistemas embarcados estão presentes em diversas aplicações tecnológicas, desempenhando funções específicas por meio da integração entre hardware e software. Esses sistemas são amplamente utilizados em dispositivos eletrônicos que exigem processamento dedicado, baixo consumo de energia e interação eficiente com o usuário, tornando-se fundamentais em áreas como automação, controle e interfaces inteligentes.
 
 Neste contexto, o desenvolvimento de um \textit{Stream Deck} representa uma aplicação prática dos conceitos estudados na disciplina de Sistemas Embarcados I da UFU/FEELT. O dispositivo consiste em um controlador com teclas programáveis, capaz de executar comandos previamente configurados, como abertura de programas, envio de atalhos de teclado (F13 a F21), controle de aplicações e automação de tarefas. Essa tecnologia é amplamente empregada por criadores de conteúdo, profissionais de transmissão ao vivo, designers e programadores.
 
@@ -149,10 +151,12 @@ O projeto proporcionou a aplicação de conhecimentos relacionados à programaç
 
 \subsection{Objetivos Específicos}
 \begin{itemize}
-    \item Implementar a programação do microcontrolador responsável pelo gerenciamento das entradas por meio de \textbf{Interrupção de Timer de Hardware (TIM2)}, eliminando o \textit{polling}.
+    \item Implementar a programação do microcontrolador responsável pelo gerenciamento das entradas por meio de \textbf{Interrupção de Timer de Hardware (TIM2 a 100~Hz)}, eliminando o \textit{polling} no loop principal com a instrução \texttt{\_\_WFI()}.
+    \item Implementar a **re-enumeração USB automática por software** na inicialização (pino \texttt{PA12}) para forçar a identificação limpa no Windows/Linux após gravações via ST-LINK.
+    \item Corrigir os limites de memória da biblioteca ST USB Custom HID, ajustando o tamanho do relatório (\texttt{USBD\_CUSTOM\_HID\_REPORT\_DESC\_SIZE = 63}) e dos Endpoints IN/OUT (\texttt{CUSTOM\_HID\_EPIN\_SIZE = 8}), eliminando 61 avisos de estouro de array no compilador GCC.
     \item Especificar a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional com encaixe $14\,\text{mm} \times 14\,\text{mm}$).
     \item Desenvolver a PCB no KiCad em \textbf{Face Simples (Single Layer \texttt{B.Cu})} com trilhas engrossadas ($0.8\,\text{mm}$ a $1.2\,\text{mm}$) para permitir a fabricação manual por corrosão em Percloreto de Ferro.
-    \item Integrar a comunicação USB Custom HID bidirecional para troca de relatórios IN e OUT com a aplicação em Python 3.
+    \item Habilitar o suporte de depuração SWD em modo Sleep via \texttt{HAL\_DBGMCU\_EnableDBGSleepMode()}.
     \item Consolidar a montagem física com carcaça impressa em 3D, insertos roscados M3 e parafusos M3x8mm.
 \end{itemize}
 
@@ -188,10 +192,10 @@ Outro aspecto importante do projeto é a integração entre os componentes mecâ
 % 5. RESULTADOS E DISCUSSÃO
 % ==============================================================================
 \section{Resultados e Discussão}
-\hspace*{1.25cm}Nesta seção são apresentados os principais resultados obtidos durante o desenvolvimento do Stream Deck, contemplando as etapas de projeto eletrônico no KiCad, configuração do microcontrolador no STM32CubeMX, implementação do firmware por interrupção e montagem física.
+\hspace*{1.25cm}Nesta seção são apresentados os principais resultados obtidos durante o desenvolvimento do Stream Deck, contemplando as etapas de projeto eletrônico no KiCad, configuração do microcontrolador no STM32CubeMX, implementação das rotinas de interrupção e USB, e montagem física finalizada.
 
 \subsection{Projeto Eletrônico no KiCad (PCB Face Simples Manual)}
-A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétrico e do layout da placa de circuito impresso utilizando o software KiCad. Atendendo à solicitação do professor, o layout da placa foi desenvolvido exclusivamente na \textbf{camada inferior de cobre (\texttt{B.Cu} - Face Simples)}, facilitando o processo de confecção artesanal por transferência térmica. As trilhas foram engrossadas para larguras entre \textbf{$0.8\,\text{mm}$ (31,5 mils)} e \textbf{$1.2\,\text{mm}$ (47,2 mils)} com espaçamento de segurança de \textbf{$0.5\,\text{mm}$}, eliminando riscos de rompimento ou curto-circuito na corrosão por Percloreto de Ferro.
+\hspace*{1.25cm}A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétrico e do layout da placa de circuito impresso utilizando o software KiCad. Atendendo à solicitação do professor, o layout da placa foi desenvolvido exclusivamente na \textbf{camada inferior de cobre (\texttt{B.Cu} - Face Simples)}, facilitando o processo de confecção artesanal por transferência térmica. As trilhas foram engrossadas para larguras entre \textbf{$0.8\,\text{mm}$ (31,5 mils)} e \textbf{$1.2\,\text{mm}$ (47,2 mils)} com espaçamento de segurança de \textbf{$0.5\,\text{mm}$}, eliminando riscos de rompimento ou curto-circuito na corrosão por Percloreto de Ferro.
 
 \begin{figure}[H]
 \centering
@@ -204,38 +208,56 @@ A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétri
 \label{fig:esquematico}
 \end{figure}
 
+% --- IMAGENS DA PCB LADO A LADO ---
 \begin{figure}[H]
 \centering
-\IfFileExists{pcb_3d_kicad.png}{
-  \includegraphics[width=0.75\textwidth]{pcb_3d_kicad.png}
-}{
-  \IfFileExists{emmaos.jpeg}{\includegraphics[width=0.75\textwidth]{emmaos.jpeg}}{\includegraphics[width=0.75\textwidth]{streamdeck_hardware.png}}
-}
-\caption{Visualização 3D da Placa de Circuito Impresso no KiCad.}
-\label{fig:pcb3d}
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \IfFileExists{pcb_3d_kicad.png}{
+      \includegraphics[width=\textwidth]{pcb_3d_kicad.png}
+    }{
+      \IfFileExists{emmaos.jpeg}{\includegraphics[width=\textwidth]{emmaos.jpeg}}{\includegraphics[width=\textwidth]{streamdeck_hardware.png}}
+    }
+    \caption{Visualização 3D Superior da PCB.}
+    \label{fig:pcb3d_sub}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \IfFileExists{pcb_layout_kicad.png}{
+      \includegraphics[width=\textwidth]{pcb_layout_kicad.png}
+    }{
+      \IfFileExists{montage.jpg}{\includegraphics[width=\textwidth]{montage.jpg}}{\includegraphics[width=\textwidth]{streamdeck_assembly.jpg}}
+    }
+    \caption{Roteamento Single-Layer (\texttt{B.Cu}).}
+    \label{fig:pcblayout_sub}
+\end{subfigure}
+\caption{Projeto e renderização da Placa de Circuito Impresso no KiCad dispostos lado a lado.}
+\label{fig:pcb_lado_a_lado}
 \end{figure}
 
-\begin{figure}[H]
-\centering
-\IfFileExists{pcb_layout_kicad.png}{
-  \includegraphics[width=0.75\textwidth]{pcb_layout_kicad.png}
-}{
-  \IfFileExists{montage.jpg}{\includegraphics[width=0.75\textwidth]{montage.jpg}}{\includegraphics[width=0.75\textwidth]{streamdeck_assembly.jpg}}
-}
-\caption{Layout de roteamento em camada única (Face Simples \texttt{B.Cu}) com trilhas de 0.8mm a 1.2mm.}
-\label{fig:layout2d}
-\end{figure}
-
-\subsection{Configuração e Programação no STM32CubeMX}
-\hspace*{1.25cm}Após a definição do circuito eletrônico, foi realizada a configuração do microcontrolador por meio do software STM32CubeMX. As portas GPIO foram alocadas da seguinte forma:
+\subsection{Configuração do Timer TIM2 e NVIC no STM32CubeMX}
+\hspace*{1.25cm}Após a definição do circuito eletrônico, realizou-se a configuração do timer de hardware **TIM2** e do controlador de interrupções (NVIC) no STM32CubeMX:
 \begin{itemize}
-    \item \textbf{Linhas (\texttt{LINE\_1} a \texttt{LINE\_3}):} Pinos \texttt{PA1}, \texttt{PA2}, \texttt{PA3} configurados como \texttt{GPIO\_MODE\_OUTPUT\_OD} (Open Drain).
-    \item \textbf{Colunas (\texttt{COL\_1} a \texttt{COL\_3}):} Pinos \texttt{PA4}, \texttt{PA5}, \texttt{PA6} configurados como \texttt{GPIO\_MODE\_INPUT} com \texttt{GPIO\_PULLUP} interno.
-    \item \textbf{Comunicação USB HID:} Pinos \texttt{PA11} (\texttt{USB\_DM}) e \texttt{PA12} (\texttt{USB\_DP}) configurados na classe Custom HID.
-    \item \textbf{Interface de Gravação SWD:} Pinos \texttt{PA13} (\texttt{SYS\_JTMS-SWDIO}) e \texttt{PA14} (\texttt{SYS\_JTCK-SWCLK}).
+    \item \textbf{Clock de Entrada do Timer (APB1 Timer Clock):} $72\,\text{MHz}$.
+    \item \textbf{Prescaler (PSC):} $7199$. A frequência de contagem do timer resulta em:
+    \begin{equation}
+        f_{\text{tick}} = \frac{72.000.000\,\text{Hz}}{7199 + 1} = 10.000\,\text{Hz} \implies T_{\text{tick}} = 0,1\,\text{ms}
+    \end{equation}
+    \item \textbf{Counter Period (ARR):} $99$. O período de interrupção da ISR é dado por:
+    \begin{equation}
+        T_{\text{ISR}} = (99 + 1) \times 0,1\,\text{ms} = 10\,\text{ms} \implies f_{\text{ISR}} = 100\,\text{Hz}
+    \end{equation}
+    \item \textbf{Vetor de Interrupção NVIC:} Habilitada a interrupção \texttt{TIM2\_IRQn} com prioridade 0, gerando a rotina \texttt{TIM2\_IRQHandler()} no arquivo \texttt{stm32f1xx\_it.c}.
 \end{itemize}
 
-\hspace*{1.25cm}A árvore de clock do sistema foi configurada utilizando o oscilador cristal externo (HSE) de 8 MHz com multiplicador PLL $\times 9$, resultando em uma frequência principal de \textbf{72 MHz (SYSCLK)}. Para o correto funcionamento do periférico USB Full-Speed (12 Mbps), aplicou-se o divisor dedicado USB de \textbf{/1.5}, gerando exatos \textbf{48 MHz (USBCLK)}. O barramento APB1 foi ajustado com prescaler \textbf{/2} para respeitar o limite de 36 MHz.
+As portas GPIO foram alocadas da seguinte forma:
+\begin{itemize}
+    \item \textbf{Linhas (\texttt{LINE\_1} a \texttt{LINE\_3}):} Pinos \texttt{PA1}, \texttt{PA2}, \texttt{PA3} em \texttt{GPIO\_MODE\_OUTPUT\_OD} (Open Drain).
+    \item \textbf{Colunas (\texttt{COL\_1} a \texttt{COL\_3}):} Pinos \texttt{PA4}, \texttt{PA5}, \texttt{PA6} em \texttt{GPIO\_MODE\_INPUT} com \texttt{GPIO\_PULLUP} interno.
+    \item \textbf{Comunicação USB HID:} Pinos \texttt{PA11} (\texttt{USB\_DM}) e \texttt{PA12} (\texttt{USB\_DP}) na classe Custom HID.
+    \item \textbf{Interface SWD Debugger:} Pinos \texttt{PA13} (\texttt{SYS\_JTMS-SWDIO}) e \texttt{PA14} (\texttt{SYS\_JTCK-SWCLK}).
+\end{itemize}
 
 \begin{figure}[H]
 \centering
@@ -259,10 +281,16 @@ A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétri
 \label{fig:clock_tree}
 \end{figure}
 
-\subsection{Varredura da Matriz por Interrupção de Timer (TIM2)}
-\hspace*{1.25cm}Para atender integralmente à exigência de eliminar o \textit{polling} no \texttt{while(1)}, o timer de hardware \textbf{TIM2} foi configurado com prescaler 7199 e período 99, gerando interrupções periódicas de hardware a cada \textbf{10 ms (100 Hz)}. 
+\subsection{Otimizações Avançadas de Firmware e Pilha USB}
+\hspace*{1.25cm}Durante os testes práticos com o protótipo montado, foram implementadas quatro otimizações fundamentais de engenharia no firmware:
 
-\hspace*{1.25cm}A cada estouro do Timer, a função \texttt{HAL\_TIM\_PeriodElapsedCallback()} é acionada automaticamente pelo hardware, executando a varredura da matriz 3x3 e o filtro de debouncing de 40 ms por máquina de estados. O loop principal no \texttt{main()} permanece 100\% ocioso executando a instrução de baixo consumo \texttt{\_\_WFI()} (\textit{Wait For Interrupt}).
+\begin1. \textbf{Re-enumeração USB D+ por Software:} Como as placas BluePill não possuem circuito transistorizado na linha \texttt{USB\_DP} (\texttt{PA12}), adicionou-se um pulso de desconexão forçada por software em \texttt{main.c} antes de iniciar a pilha USB. O pino \texttt{PA12} é forçado a nível baixo ($0\,\text{V}$) por $100\,\text{ms}$, fazendo com que o sistema operacional hospedeiro invalide a sessão antiga e re-enumere o dispositivo de forma automática imediatamente após a gravação via ST-LINK.
+\textbf{Correção nos Endpoints USB Custom HID:} Corrigiu-se o tamanho de memória dos buffers de transferência. O tamanho do relatório (\texttt{USBD\_CUSTOM\_HID\_REPORT\_DESC\_SIZE}) foi atualizado de 2 para 63 bytes em \texttt{usbd\_conf.h} e \texttt{.ioc}, eliminando 61 avisos de compilação (*excess elements in array initializer*). Adicionalmente, o tamanho dos Endpoints de transferência (\texttt{CUSTOM\_HID\_EPIN\_SIZE} e \texttt{CUSTOM\_HID\_EPOUT\_SIZE}) foi expandido para 8 Bytes (\texttt{0x08U}), garantindo o envio completo do pacote de relatório de teclado padrão.
+\textbf{Suporte à Depuração ST-LINK em Modo Sleep:} Ao colocar a CPU em repouso com \texttt{\_\_WFI()}, o relógio do gravador SWD era interrompido. A inclusão do comando \texttt{HAL\_DBGMCU\_EnableDBGSleepMode()} no ciclo de inicialização permitiu manter a depuração em tempo real ativa no STM32CubeIDE mesmo com a CPU em baixo consumo.
+\textbf{Micro-delay de Estabilização Elétrica na Matriz:} Na função \texttt{scanMatrix_ISR()}, foi introduzido um pequeno atraso de 50 ciclos \texttt{\_\_NOP()} após o comutamento de cada linha para nível baixo, permitindo a descarga completa da capacitância parasita acumulada nas trilhas de cobre da PCB artesanal.
+
+\subsection{Varredura da Matriz por Interrupção de Timer (TIM2)}
+\hspace*{1.25cm}Para atender integralmente à exigência de eliminar o \textit{polling} no \texttt{while(1)}, o timer de hardware \textbf{TIM2} dispara a interrupção periódica a cada **10 ms (100 Hz)**, executando a callback \texttt{HAL\_TIM\_PeriodElapsedCallback()} que realiza a amostragem e a máquina de estados de debouncing de 40 ms. O loop principal permanece 100\% ocioso em \texttt{\_\_WFI()}.
 
 \begin{figure}[H]
 \centering
@@ -296,7 +324,7 @@ A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétri
 \begin{lstlisting}
 /* 
  * Firmware Stream Deck - STM32F103C8T6 (Sistemas Embarcados I - UFU)
- * Varredura de Matriz 3x3 realizada 100% via Interrupcao por Timer TIM2 (100 Hz)
+ * Arquitetura por Interrupcao de Timer TIM2 (100 Hz), Re-enumeracao USB e Low-Power
  */
 #include "main.h"
 #include "usb_device.h"
@@ -306,22 +334,25 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 
 static uint16_t rowPins[3] = {GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3};
 static uint16_t colPins[3] = {GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6};
+static GPIO_TypeDef* rowPorts[3] = {GPIOA, GPIOA, GPIOA};
+static GPIO_TypeDef* colPorts[3] = {GPIOA, GPIOA, GPIOA};
 
 volatile int last_raw_key = -1;
 volatile int stable_valid_key = -1;
 volatile uint32_t sample_ticks = 0;
 
-/* Varredura executada dentro do contexto de ISR */
+/* Varredura com micro-delay capacitivo executada em contexto de ISR */
 int scanMatrix_ISR(void) {
     for (int r = 0; r < 3; r++) {
-        HAL_GPIO_WritePin(GPIOA, rowPins[r], GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(rowPorts[r], rowPins[r], GPIO_PIN_RESET);
+        for (volatile int i = 0; i < 50; i++) { __NOP(); } // Descarga parasita
         for (int c = 0; c < 3; c++) {
-            if (HAL_GPIO_ReadPin(GPIOA, colPins[c]) == GPIO_PIN_RESET) {
-                HAL_GPIO_WritePin(GPIOA, rowPins[r], GPIO_PIN_SET);
+            if (HAL_GPIO_ReadPin(colPorts[c], colPins[c]) == GPIO_PIN_RESET) {
+                HAL_GPIO_WritePin(rowPorts[r], rowPins[r], GPIO_PIN_SET);
                 return (r * 3) + c;
             }
         }
-        HAL_GPIO_WritePin(GPIOA, rowPins[r], GPIO_PIN_SET);
+        HAL_GPIO_WritePin(rowPorts[r], rowPins[r], GPIO_PIN_SET);
     }
     return -1;
 }
@@ -350,6 +381,22 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 int main(void) {
     HAL_Init();
     SystemClock_Config();
+
+    /* USER CODE BEGIN SysInit */
+    // Reset forçado da linha USB D+ (PA12) para re-enumeração no Windows
+    GPIO_InitTypeDef GPIO_InitStruct_USB = {0};
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    GPIO_InitStruct_USB.Pin = GPIO_PIN_12;
+    GPIO_InitStruct_USB.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct_USB.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct_USB);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
+    HAL_Delay(100);
+
+    /* Habilita depuração SWD mesmo com CPU em modo repouso __WFI */
+    HAL_DBGMCU_EnableDBGSleepMode();
+    /* USER CODE END SysInit */
+
     MX_GPIO_Init();
     MX_USB_DEVICE_Init();
     MX_TIM2_Init();
