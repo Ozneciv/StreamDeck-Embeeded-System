@@ -78,7 +78,7 @@
 % ==============================================================================
 \begin{titlepage}
     \centering
-    \includegraphics[width=2.8cm]{dashboard/ufu_logo.png}\\[0.5cm]
+    \IfFileExists{ufu_logo.png}{\includegraphics[width=4.5cm]{ufu_logo.png}}{\includegraphics[width=4.5cm]{dashboard/ufu_logo.png}}\\[0.5cm]
     {\bfseries \Large UNIVERSIDADE FEDERAL DE UBERLÂNDIA}\\[0.2cm]
     {\bfseries \large FACULDADE DE ENGENHARIA ELÉTRICA — FEELT}\\[0.1cm]
     {\small DISCIPLINA DE SISTEMAS EMBARCADOS I}\\[2.0cm]
@@ -100,7 +100,7 @@
     \begin{minipage}{0.45\textwidth}
         \begin{flushright} \large
             \textbf{Docente Responsável:}\\[0.2cm]
-            Prof. Jeovane Reges\\[0.4cm]
+            Prof. Jeovane Vicente de Sousa\\[0.4cm]
             \textbf{Curso:}\\
             Engenharia de Computação\\
             \& Engenharia Eletrônica
@@ -190,10 +190,10 @@ A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétri
 
 \begin{figure}[H]
 \centering
-\IfFileExists{figuras/esquematico_kicad.png}{
-  \includegraphics[width=0.9\textwidth]{figuras/esquematico_kicad.png}
+\IfFileExists{esquematico_kicad.png}{
+  \includegraphics[width=0.85\textwidth]{esquematico_kicad.png}
 }{
-  \includegraphics[width=0.9\textwidth]{streamdeck_assembly.jpg}
+  \IfFileExists{montage.jpg}{\includegraphics[width=0.85\textwidth]{montage.jpg}}{\includegraphics[width=0.85\textwidth]{streamdeck_assembly.jpg}}
 }
 \caption{Esquemático do circuito eletrônico do Stream Deck projetado no KiCad.}
 \label{fig:esquematico}
@@ -201,10 +201,10 @@ A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétri
 
 \begin{figure}[H]
 \centering
-\IfFileExists{figuras/pcb_3d_kicad.png}{
-  \includegraphics[width=0.75\textwidth]{figuras/pcb_3d_kicad.png}
+\IfFileExists{pcb_3d_kicad.png}{
+  \includegraphics[width=0.75\textwidth]{pcb_3d_kicad.png}
 }{
-  \includegraphics[width=0.75\textwidth]{streamdeck_hardware.png}
+  \IfFileExists{emmaos.jpeg}{\includegraphics[width=0.75\textwidth]{emmaos.jpeg}}{\includegraphics[width=0.75\textwidth]{streamdeck_hardware.png}}
 }
 \caption{Visualização 3D da Placa de Circuito Impresso no KiCad.}
 \label{fig:pcb3d}
@@ -212,10 +212,10 @@ A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétri
 
 \begin{figure}[H]
 \centering
-\IfFileExists{figuras/pcb_layout_kicad.png}{
-  \includegraphics[width=0.75\textwidth]{figuras/pcb_layout_kicad.png}
+\IfFileExists{pcb_layout_kicad.png}{
+  \includegraphics[width=0.75\textwidth]{pcb_layout_kicad.png}
 }{
-  \includegraphics[width=0.75\textwidth]{streamdeck_assembly.jpg}
+  \IfFileExists{montage.jpg}{\includegraphics[width=0.75\textwidth]{montage.jpg}}{\includegraphics[width=0.75\textwidth]{streamdeck_assembly.jpg}}
 }
 \caption{Layout de roteamento em camada única (Face Simples \texttt{B.Cu}) com trilhas de 0.8mm a 1.2mm.}
 \label{fig:layout2d}
@@ -234,10 +234,10 @@ A árvore de clock do sistema foi configurada utilizando o oscilador cristal ext
 
 \begin{figure}[H]
 \centering
-\IfFileExists{figuras/cubemx_pinout.png}{
-  \includegraphics[width=0.75\textwidth]{figuras/cubemx_pinout.png}
+\IfFileExists{cubemx_pinout.png}{
+  \includegraphics[width=0.75\textwidth]{cubemx_pinout.png}
 }{
-  \includegraphics[width=0.75\textwidth]{streamdeck_hardware.png}
+  \IfFileExists{emmaos.jpeg}{\includegraphics[width=0.75\textwidth]{emmaos.jpeg}}{\includegraphics[width=0.75\textwidth]{streamdeck_hardware.png}}
 }
 \caption{Mapeamento dos pinos GPIO e periférico USB no STM32CubeMX.}
 \label{fig:cubemx_pinout}
@@ -245,10 +245,10 @@ A árvore de clock do sistema foi configurada utilizando o oscilador cristal ext
 
 \begin{figure}[H]
 \centering
-\IfFileExists{figuras/cubemx_clock_tree.png}{
-  \includegraphics[width=0.85\textwidth]{figuras/cubemx_clock_tree.png}
+\IfFileExists{cubemx_clock_tree.png}{
+  \includegraphics[width=0.85\textwidth]{cubemx_clock_tree.png}
 }{
-  \includegraphics[width=0.85\textwidth]{streamdeck_hardware.png}
+  \IfFileExists{emmaos.jpeg}{\includegraphics[width=0.85\textwidth]{emmaos.jpeg}}{\includegraphics[width=0.85\textwidth]{streamdeck_hardware.png}}
 }
 \caption{Árvore de clock configurada para 72 MHz SYSCLK e 48 MHz USBCLK.}
 \label{fig:clock_tree}
@@ -364,14 +364,22 @@ Em seguida, os nove switches mecânicos foram instalados na carcaça e interliga
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\textwidth]{streamdeck_hardware.png}
+\IfFileExists{emmaos.jpeg}{
+  \includegraphics[width=0.75\textwidth]{emmaos.jpeg}
+}{
+  \includegraphics[width=0.75\textwidth]{streamdeck_hardware.png}
+}
 \caption{Montagem física do protótipo Stream Deck finalizado em carcaça impressa 3D.}
 \label{fig:hardware_final}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\textwidth]{streamdeck_assembly.jpg}
+\IfFileExists{montage.jpg}{
+  \includegraphics[width=0.75\textwidth]{montage.jpg}
+}{
+  \includegraphics[width=0.75\textwidth]{streamdeck_assembly.jpg}
+}
 \caption{Soldagem e fiação interna dos switches mecânicos e diodos 1N4148.}
 \label{fig:assembly_final}
 \end{figure}
