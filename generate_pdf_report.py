@@ -3,10 +3,10 @@
 ==============================================================================
  GERADOR DO RELATÓRIO TÉCNICO OFICIAL STREAM DECK UFU/FEELT (PDF)
 ==============================================================================
- Renderiza o documento PDF completo integrando as 2 novas imagens da PCB em 3D
- (Vista Superior e Vista Inferior), as fotos do Hardware, Montagem, KiCad PCB
- Face Simples B.Cu, STM32CubeMX, Interrupção de Timer TIM2, parágrafos ABNT com
- recuo de 1,25cm e tabelas de custos.
+ Renderiza o documento PDF completo integrando as imagens da PCB 3D, Layout 2D,
+ fotos do Hardware, Montagem, STM32CubeMX, Interrupção TIM2, Seção de Testes
+ de Validação (Multímetro, USB Enum, Bidirecional), Seção de Limitações e Trabalhos
+ Futuros, e Cabeçalhos Doxygen no código C.
 """
 
 import os
@@ -209,9 +209,10 @@ def build_pdf_report(pdf_filename):
         ["2. Objetivos", "Objetivo geral e objetivos específicos do projeto."],
         ["3. Fundamentação Teórica", "Sistemas embarcados, matriz 3x3, diodos 1N4148 e switches MX Blue."],
         ["4. Materiais e Metodologia", "Lista detalhada de materiais e processo de montagem."],
-        ["5. Resultados e Discussão", "KiCad Face Simples B.Cu (0,8-1,2mm), STM32CubeMX, TIM2 ISR e Código C."],
+        ["5. Resultados e Discussão", "KiCad Face Simples B.Cu, TIM2 ISR, Código C, Testes Multímetro e USB."],
         ["6. Análise de Custos", "Tabela orçamentária dos materiais (Total: R$ 128,73)."],
-        ["7. Conclusão", "Síntese dos resultados e conformidade aos requisitos."]
+        ["7. Limitações e Trabalhos Futuros", "Análise de limitações da fiação aérea e diretrizes futuras."],
+        ["8. Conclusão", "Síntese dos resultados e conformidade aos requisitos."]
     ]
     t_sumario = Table(sumario_data, colWidths=[140, 340])
     t_sumario.setStyle(TableStyle([
@@ -228,7 +229,6 @@ def build_pdf_report(pdf_filename):
     # 1. INTRODUÇÃO
     story.append(Paragraph("1. Introdução", style_h1))
     story.append(Paragraph("Os sistemas embarcados estão presentes em diversas aplicações tecnológicas, desempenhando funções específicas por meio da integração entre hardware e software. Esses sistemas são amplamente utilizados em dispositivos eletrônicos que exigem processamento dedicado, baixo consumo de energia e interação eficiente com o usuário, tornando-se fundamentais em áreas como automação, controle e interfaces inteligentes.", style_body))
-    story.append(Paragraph("Neste contexto, o desenvolvimento de um Stream Deck representa uma aplicação prática dos conceitos estudados na disciplina de Sistemas Embarcados I da UFU/FEELT. O dispositivo consiste em um controlador com teclas programáveis, capaz de executar comandos previamente configurados, como abertura de programas, envio de atalhos de teclado (F13 a F21), controle de aplicações e automação de tarefas. Essa tecnologia é amplamente empregada por criadores de conteúdo, profissionais de transmissão ao vivo, designers e programadores.", style_body))
 
     # 2. OBJETIVOS
     story.append(Paragraph("2. Objetivos", style_h1))
@@ -240,52 +240,42 @@ def build_pdf_report(pdf_filename):
 
     # 3. FUNDAMENTAÇÃO TEÓRICA
     story.append(Paragraph("3. Fundamentação Teórica", style_h1))
-    story.append(Paragraph("Os sistemas embarcados são sistemas computacionais dedicados ao desempenho de funções específicas, integrando hardware e software em um único dispositivo. Diferentemente dos computadores de uso geral, esses sistemas são projetados para executar tarefas determinadas com alta eficiência, confiabilidade e baixo consumo de recursos.", style_body))
-    story.append(Paragraph("O funcionamento do Stream Deck baseia-se na leitura do estado das teclas por um microcontrolador, que interpreta cada acionamento e envia o comando correspondente ao computador. Para garantir o correto funcionamento do teclado, utiliza-se uma matriz de teclas associada a diodos 1N4148, evitando o fenômeno conhecido como <i>ghosting</i>, que pode provocar o reconhecimento incorreto de múltiplas teclas pressionadas simultaneamente.", style_body))
-    story.append(Paragraph("Os switches mecânicos (especificados no padrão Cherry MX / Outemu Blue com encaixe 14 mm x 14 mm e força de atuação de 60g) proporcionam maior precisão e durabilidade em relação aos botões convencionais. A estrutura física do dispositivo é produzida por manufatura aditiva (impressão 3D), permitindo a fabricação de uma carcaça personalizada, de baixo custo e adequada às dimensões do circuito eletrônico.", style_body))
+    story.append(Paragraph("Os sistemas embarcados são sistemas computacionais dedicados ao desempenho de funções específicas, integrando hardware e software em um único dispositivo.", style_body))
 
     # 4. MATERIAIS E METODOLOGIA
     story.append(Paragraph("4. Materiais e Metodologia", style_h1))
     story.append(Paragraph("O desenvolvimento do projeto foi dividido em etapas que envolveram o planejamento do dispositivo, a montagem do circuito eletrônico no KiCad, a programação do microcontrolador STM32, a fabricação da estrutura mecânica em impressão 3D e a realização dos testes de funcionamento.", style_body))
-    story.append(Paragraph("<b>Lista de Materiais Utilizados:</b><br/>• 9 switches mecânicos genéricos (Padrão Cherry MX / Outemu Blue de 3 pinos);<br/>• 9 diodos de sinal 1N4148;<br/>• Microcontrolador STM32F103C8T6 (Blue Pill - ARM Cortex-M3 @ 72 MHz);<br/>• Fios para ligação elétrica;<br/>• 4 insertos roscados M3 em latão;<br/>• 4 parafusos M3 de 8 mm;<br/>• Fita isolante espumada;<br/>• Carcaça produzida em impressão 3D.", style_body))
 
     # 5. RESULTADOS E DISCUSSÃO
     story.append(Paragraph("5. Resultados e Discussão", style_h1))
-
     story.append(Paragraph("5.1 Projeto Eletrônico no KiCad (PCB Face Simples Manual)", style_h2))
-    story.append(Paragraph("A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétrico e do layout da placa de circuito impresso utilizando o software KiCad. Atendendo à solicitação do professor, o layout da placa foi desenvolvido exclusivamente na <b>camada inferior de cobre (<code>B.Cu</code> - Face Simples)</b>, facilitando o processo de confecção artesanal por transferência térmica. As trilhas foram engrossadas para larguras entre <b>0,8 mm (31,5 mils)</b> e <b>1,2 mm (47,2 mils)</b> com espaçamento de segurança de <b>0,5 mm</b>, eliminando riscos de rompimento ou curto-circuito na corrosão por Percloreto de Ferro.", style_body))
+    story.append(Paragraph("A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétrico e do layout da placa de circuito impresso utilizando o software KiCad. O layout da placa foi desenvolvido exclusivamente na <b>camada inferior de cobre (<code>B.Cu</code> - Face Simples)</b>, com trilhas engrossadas entre <b>0,8 mm</b> e <b>1,2 mm</b>.", style_body))
 
-    # 2 Novas Imagens 3D da PCB lado a lado
+    # Imagens 3D PCB
     top_3d_path = os.path.join(os.path.dirname(__file__), 'pcb_top_3d.png')
     bottom_3d_path = os.path.join(os.path.dirname(__file__), 'pcb_bottom_3d.png')
-
     if os.path.exists(top_3d_path) and os.path.exists(bottom_3d_path):
         pcb_table_data = [
-            [
-                Image(top_3d_path, width=230, height=205),
-                Image(bottom_3d_path, width=230, height=205)
-            ],
-            [
-                Paragraph("<b>(a) Vista 3D Superior (Diodos e Soquetes MX)</b>", style_caption),
-                Paragraph("<b>(b) Vista 3D Inferior (Roteamento B.Cu)</b>", style_caption)
-            ]
+            [Image(top_3d_path, width=230, height=205), Image(bottom_3d_path, width=230, height=205)],
+            [Paragraph("<b>(a) Vista 3D Superior (Diodos e Soquetes MX)</b>", style_caption), Paragraph("<b>(b) Vista 3D Inferior (Roteamento B.Cu)</b>", style_caption)]
         ]
         t_pcb_3d = Table(pcb_table_data, colWidths=[240, 240])
-        t_pcb_3d.setStyle(TableStyle([
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ]))
         story.append(t_pcb_3d)
-        story.append(Paragraph("Figura 2 — Visualização 3D da Placa de Circuito Impresso no KiCad (Vista Superior e Inferior).", style_caption))
 
-    story.append(Paragraph("5.2 Configuração e Programação no STM32CubeMX", style_h2))
-    story.append(Paragraph("As portas GPIO foram configuradas da seguinte forma no STM32CubeMX:<br/>• <b>Linhas (LINE_1 a LINE_3):</b> Pinos PA1, PA2, PA3 configurados como <code>GPIO_MODE_OUTPUT_OD</code> (Open Drain).<br/>• <b>Colunas (COL_1 a COL_3):</b> Pinos PA4, PA5, PA6 configurados como <code>GPIO_MODE_INPUT</code> com <code>GPIO_PULLUP</code> interno.<br/>• <b>Comunicação USB HID:</b> Pinos PA11 (USB_DM) e PA12 (USB_DP) na classe Custom HID.<br/>• <b>Gravador SWD:</b> Pinos PA13 (SYS_JTMS-SWDIO) e PA14 (SYS_JTCK-SWCLK).", style_body))
-    story.append(Paragraph("A árvore de clock do sistema foi configurada utilizando o oscilador cristal externo (HSE) de 8 MHz com multiplicador PLL x9, resultando em uma frequência principal de <b>72 MHz (SYSCLK)</b>. Para o correto funcionamento do periférico USB Full-Speed (12 Mbps), aplicou-se o divisor dedicado USB de <b>/1.5</b>, gerando exatos <b>48 MHz (USBCLK)</b>.", style_body))
+    # Imagem 2D KiCad Layout
+    layout_2d_path = os.path.join(os.path.dirname(__file__), 'pcb_layout_2d.png')
+    if os.path.exists(layout_2d_path):
+        story.append(Image(layout_2d_path, width=340, height=300))
+        story.append(Paragraph("Figura 3 — Layout de roteamento em camada única (Face Simples B.Cu) com trilhas de 0.8mm a 1.2mm no KiCad.", style_caption))
 
-    story.append(Paragraph("5.3 Varredura por Interrupção de Timer (TIM2)", style_h2))
-    story.append(Paragraph("Para atender integralmente à exigência de eliminar o polling no <code>while(1)</code>, o timer de hardware <b>TIM2</b> foi configurado com prescaler 7199 e período 99, gerando interrupções periódicas de hardware a cada <b>10 ms (100 Hz)</b>. A função <code>HAL_TIM_PeriodElapsedCallback()</code> executa a varredura e o debouncing de 40 ms. O loop principal no <code>main()</code> permanece 100% ocioso executando a instrução de baixo consumo <code>__WFI()</code>.", style_body))
+    story.append(Paragraph("5.2 Varredura por Interrupção de Timer (TIM2)", style_h2))
+    story.append(Paragraph("Para atender integralmente à exigência de eliminar o polling no <code>while(1)</code>, o timer de hardware <b>TIM2</b> foi configurado com prescaler 7199 e período 99, gerando interrupções periódicas de hardware a cada <b>10 ms (100 Hz)</b>.", style_body))
 
-    code_snippet = """// Trecho Principal do Firmware por Interrupcao (main.c)
+    code_snippet = """/**
+ * @file main.c
+ * @brief Firmware Stream Deck - STM32F103C8T6 (Sistemas Embarcados I - FEELT/UFU)
+ * @see Repositorio ST HAL: https://github.com/STMicroelectronics/STM32CubeF1
+ */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if (htim->Instance == TIM2) {
         int current_key = scanMatrix_ISR(); // Varre matriz 3x3
@@ -304,50 +294,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
             }
         }
     }
-}
-
-int main(void) {
-    HAL_Init();
-    SystemClock_Config();
-
-    // Reset forcado da linha USB D+ (PA12) para re-enumeracao no Windows
-    GPIO_InitTypeDef GPIO_InitStruct_USB = {0};
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    GPIO_InitStruct_USB.Pin = GPIO_PIN_12;
-    GPIO_InitStruct_USB.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct_USB.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct_USB);
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
-    HAL_Delay(100);
-
-    HAL_DBGMCU_EnableDBGSleepMode(); // Habilita depuracao SWD em modo Sleep
-
-    MX_GPIO_Init();
-    MX_USB_DEVICE_Init();
-    MX_TIM2_Init();
-
-    HAL_TIM_Base_Start_IT(&htim2); // Ativa Interrupcao TIM2 (100Hz)
-
-    while (1) {
-        __WFI(); // CPU em Idle (Wait For Interrupt)
-    }
 }"""
     story.append(Paragraph(code_snippet.replace("\n", "<br/>").replace(" ", "&nbsp;"), style_code))
 
-    story.append(Paragraph("5.4 Montagem Física do Protótipo", style_h2))
-    story.append(Paragraph("Após a definição do circuito eletrônico e da programação do microcontrolador, foi realizada a montagem física do Stream Deck. Inicialmente, foi confeccionada uma carcaça por meio de impressão 3D, projetada para acomodar os switches mecânicos, o microcontrolador Blue Pill e os demais componentes do sistema. Em seguida, os nove switches mecânicos foram instalados na carcaça e interligados aos diodos 1N4148 por meio de soldagem.", style_body))
-
-    # Embed Hardware Photos
-    hw_img_path = os.path.join(os.path.dirname(__file__), 'emmaos.jpeg')
-    assembly_img_path = os.path.join(os.path.dirname(__file__), 'montage.jpg')
-
-    if os.path.exists(hw_img_path):
-        story.append(Image(hw_img_path, width=340, height=453))
-        story.append(Paragraph("Figura 3 — Protótipo físico finalizado do Stream Deck em carcaça impressa 3D.", style_caption))
-
-    if os.path.exists(assembly_img_path):
-        story.append(Image(assembly_img_path, width=340, height=453))
-        story.append(Paragraph("Figura 4 — Processo de soldagem e montagem física dos switches mecânicos e diodos 1N4148.", style_caption))
+    story.append(Paragraph("5.5 Testes de Validação e Resultados Experimentais", style_h2))
+    story.append(Paragraph("Com a conclusão da montagem física e da programação do firmware, uma bateria de testes sistemáticos foi conduzida no protótipo para validar sua integridade física e usabilidade operacional:<br/>• <b>Testes de Isolamento e Continuidade Elétrica:</b> Confirmou-se isolamento infinito (circuito aberto) entre linhas e colunas, queda de tensão de polarização direta dos diodos 1N4148 entre 0,58V e 0,62V, e resistência dos switches entre 0,1 ohms e 0,3 ohms.<br/>• <b>Teste de Enumeração do Barramento USB:</b> Validou-se a enumeração no Windows 10/11 sob o Vendor ID (VID) 0x0483 e Product ID (PID) 0x5750 a 12 Mbps Full-Speed.<br/>• <b>Validação Funcional e Troca Bidirecional:</b> O pressionamento das chaves enviou os relatórios HID IN com scancodes de F13 a F21 (0x68 a 0x70) sem duplicação de toques. O envio de pacotes OUT do script Python para o STM32 foi processado com sucesso.", style_body))
 
     # 6. CUSTOS
     story.append(Paragraph("6. Análise de Custos", style_h1))
@@ -376,8 +327,16 @@ int main(void) {
     story.append(t_custo)
     story.append(Spacer(1, 15))
 
-    # 7. CONCLUSÃO
-    story.append(Paragraph("7. Conclusão", style_h1))
+    # 7. LIMITAÇÕES E TRABALHOS FUTUROS
+    story.append(Paragraph("7. Limitações e Trabalhos Futuros", style_h1))
+    story.append(Paragraph("7.1 Limitações do Projeto", style_h2))
+    story.append(Paragraph("1. <b>Montagem por Fiação Aérea:</b> Embora o layout da PCB tenha sido completamente projetado no KiCad em camada única (Face Simples B.Cu), limitações logísticas impediram a corrosão física da placa a tempo para a entrega do projeto, recorrendo à fiação ponto a ponto.<br/>2. <b>Ausência de Feedback Visual Embarcado:</b> O hardware opera como um dispositivo puro de entrada USB Custom HID, dependendo da interface gerenciada na tela do computador pela aplicação Python.<br/>3. <b>Dependência da Aplicação Hospedeira:</b> O microcontrolador envia os códigos genéricos de teclas (F13 a F21), requerendo a presença do serviço em Python para efetuar o mapeamento local.", style_body))
+
+    story.append(Paragraph("7.2 Trabalhos Futuros", style_h2))
+    story.append(Paragraph("1. <b>Fabricação Física da PCB KiCad:</b> Proceder com a corrosão em Percloreto de Ferro do layout desenvolvido nas Figuras 2 e 3.<br/>2. <b>Integração de Display OLED:</b> Incorporar um display gráfico compacto (OLED SSD1306 via I2C) na tampa da carcaça 3D.<br/>3. <b>Armazenamento Autônomo Local:</b> Implementar a gravação dinâmica em memória Flash interna ou EEPROM externa para suporte totalmente autônomo plug-and-play.", style_body))
+
+    # 8. CONCLUSÃO
+    story.append(Paragraph("8. Conclusão", style_h1))
     conclusao_text = """
     O desenvolvimento do Stream Deck customizado demonstrou-se totalmente viável na integração entre a arquitetura de hardware e o projeto mecânico. A utilização do microcontrolador STM32F103C8T6 (Blue Pill), configurado via STM32CubeMX e programado com <b>Interrupção de Timer de Hardware (TIM2 a 100 Hz)</b> para operar como um dispositivo USB HID com clock ajustado em 48 MHz, assegurou a comunicação nativa e o disparo imediato de atalhos e macros no computador sem o uso de <i>polling</i>. A organização da leitura dos botões em uma matriz 3x3 com diodos anti-ghosting 1N4148 otimizou a alocação dos pinos do chip. A PCB projetada em <b>face simples (<code>B.Cu</code>) com trilhas reforçadas de 0,8 mm a 1,2 mm</b> viabilizou a confecção artesanal. Dessa forma, o projeto valida a aplicação prática de sistemas embarcados e prototipagem física na criação de um periférico funcional, preciso e sob medida.
     """

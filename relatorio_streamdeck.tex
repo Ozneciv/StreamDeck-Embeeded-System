@@ -91,7 +91,7 @@
     % 3. LINHA SUPERIOR E TÍTULO PRINCIPAL
     {\color{primaryblue}\rule{\linewidth}{1.0pt}}\\[0.4cm]
     {\Large \bfseries \color{primaryblue} RELATÓRIO TÉCNICO \& MEMORIAL DESCRITIVO}\\[0.3cm]
-    {\normalsize \bfseries STREAM DECK EMBARCADO COM INTERRUPÇÃO DE TIMER, PCB FACE SIMPLES E USB HID}\\[0.4cm]
+    {\normalsize \bfseries STREAM DECK EMBARCADO COM VARREDURA POR INTERRUPÇÃO DE TIMER, PCB FACE SIMPLES E NATIVA USB HID}\\[0.4cm]
     {\color{primaryblue}\rule{\linewidth}{1.0pt}}\\[1.8cm]
 
     % 4. BLOCO DOS INTEGRANTES E DOCENTE
@@ -124,7 +124,7 @@
 % RESUMO
 % ==============================================================================
 \section*{Resumo}
-\hspace*{1.25cm}Este relatório apresenta o desenvolvimento, implementação e validação de um periférico de entrada dedicado (\textit{Stream Deck / Macro Pad}) baseado no microcontrolador ARM Cortex-M3 (STM32F103C8T6 - Blue Pill). O dispositivo é composto por uma matriz 3x3 de teclas mecânicas acopladas a diodos anti-ghosting $1\text{N}4148$, operando nativamente como protocolo USB Custom HID (\textit{Human Interface Device}). O relatório especifica a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional). Em estrito atendimento às recomendações da banca, a arquitetura do firmware foi totalmente reformulada para operar \textbf{100\% sob Interrupção de Hardware por Timer (TIM2 a 100~Hz / 10~ms)} com filtro de debouncing por máquina de estados, desativação de \textit{polling} no loop principal via instrução \texttt{\_\_WFI()}, re-enumeração USB automática por software em \texttt{PA12}, otimizaciones no tamanho dos Endpoints de relatório USB HID para 8 Bytes e suporte à depuração ST-LINK em baixa potência (\texttt{DBGMCU}). Adicionalmente, a placa de circuito impresso (PCB) foi projetada no KiCad em \textbf{camada única (Face Simples \texttt{B.Cu})} com trilhas engrossadas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$, viabilizando a corrosão artesanal manual com Percloreto de Ferro.
+\hspace*{1.25cm}Este relatório apresenta o desenvolvimento, implementação e validação de um periférico de entrada dedicado (\textit{Stream Deck / Macro Pad}) baseado no microcontrolador ARM Cortex-M3 (STM32F103C8T6 - Blue Pill). O dispositivo é composto por uma matriz 3x3 de teclas mecânicas acopladas a diodos anti-ghosting $1\text{N}4148$, operando nativamente como protocolo USB Custom HID (\textit{Human Interface Device}). O relatório especifica a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional). Em estrito atendimento às recomendações da banca, a arquitetura do firmware foi totalmente reformulada para operar \textbf{100\% sob Interrupção de Hardware por Timer (TIM2 a 100~Hz / 10~ms)} com filtro de debouncing por máquina de estados, desativação de \textit{polling} no loop principal via instrução \texttt{\_\_WFI()}, re-enumeração USB automática por software em \texttt{PA12}, otimizações no tamanho dos Endpoints de relatório USB HID para 8 Bytes e suporte à depuração ST-LINK em baixa potência (\texttt{DBGMCU}). Adicionalmente, a placa de circuito impresso (PCB) foi projetada no KiCad em \textbf{camada única (Face Simples \texttt{B.Cu})} com trilhas engrossadas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$, viabilizando a corrosão artesanal manual com Percloreto de Ferro.
 
 \textbf{Palavras-chave:} Sistemas Embarcados, STM32F103C8T6, USB Custom HID, Interrupção por Timer (TIM2), Re-enumeração USB, PCB Face Simples.
 
@@ -193,7 +193,7 @@ Outro aspecto importante do projeto é a integração entre os componentes mecâ
 % 5. RESULTADOS E DISCUSSÃO
 % ==============================================================================
 \section{Resultados e Discussão}
-\hspace*{1.25cm}Nesta seção são apresentados os principais resultados obtidos durante o desenvolvimento do Stream Deck, contemplando as etapas de projeto eletrônico no KiCad, configuração do microcontrolador no STM32CubeMX, implementação das rotinas de interrupção e USB, e montagem física finalizada.
+\hspace*{1.25cm}Nesta seção são apresentados os principais resultados obtidos durante o desenvolvimento do Stream Deck, contemplando as etapas de projeto eletrônico no KiCad, configuração do microcontrolador no STM32CubeMX, implementação das rotinas de interrupção e USB, montagem física e validação experimental.
 
 \subsection{Projeto Eletrônico no KiCad (PCB Face Simples Manual)}
 \hspace*{1.25cm}A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétrico e do layout da placa de circuito impresso utilizando o software KiCad. Atendendo à solicitação do professor, o layout da placa foi desenvolvido exclusivamente na \textbf{camada inferior de cobre (\texttt{B.Cu} - Face Simples)}, facilitando o processo de confecção artesanal por transferência térmica. As trilhas foram engrossadas para larguras entre \textbf{$0.8\,\text{mm}$ (31,5 mils)} e \textbf{$1.2\,\text{mm}$ (47,2 mils)} com espaçamento de segurança de \textbf{$0.5\,\text{mm}$}, eliminando riscos de rompimento ou curto-circuito na corrosão por Percloreto de Ferro.
@@ -336,10 +336,15 @@ As portas GPIO foram alocadas da seguinte forma:
 \end{figure}
 
 \subsection{Código-Fonte C Documentado (\texttt{main.c})}
+\hspace*{1.25cm}Em atendimento às diretrizes de documentação de firmware, o código em C utiliza a biblioteca HAL oficial da STMicroelectronics (\url{https://github.com/STMicroelectronics/STM32CubeF1}) e conta com cabeçalhos descritivos no padrão Doxygen especificados para cada função:
+
 \begin{lstlisting}
-/* 
- * Firmware Stream Deck - STM32F103C8T6 (Sistemas Embarcados I - UFU)
- * Arquitetura por Interrupcao de Timer TIM2 (100 Hz), Re-enumeracao USB e Low-Power
+/**
+ * @file main.c
+ * @brief Firmware Stream Deck - STM32F103C8T6 (Sistemas Embarcados I - FEELT/UFU)
+ * @details Varredura de Matriz 3x3 realizada 100% via Interrupcao por Timer TIM2 (100 Hz),
+ *          Re-enumeracao USB por software em PA12 e modo baixo consumo __WFI().
+ * @see Repositorio ST HAL: https://github.com/STMicroelectronics/STM32CubeF1
  */
 #include "main.h"
 #include "usb_device.h"
@@ -356,7 +361,13 @@ volatile int last_raw_key = -1;
 volatile int stable_valid_key = -1;
 volatile uint32_t sample_ticks = 0;
 
-/* Varredura com micro-delay capacitivo executada em contexto de ISR */
+/**
+ * @brief  Executa a varredura da matriz 3x3 de teclas no contexto da ISR.
+ * @note   Aplica um micro-delay de 50 instrucoes __NOP() para descarga de capacitancia
+ *         parasita em placas de circuito impresso de camada unica (B.Cu).
+ * @param  Nenhum.
+ * @retval int Índice da tecla pressionada (0 a 8) ou -1 se nenhuma tecla estiver ativa.
+ */
 int scanMatrix_ISR(void) {
     for (int r = 0; r < 3; r++) {
         HAL_GPIO_WritePin(rowPorts[r], rowPins[r], GPIO_PIN_RESET);
@@ -372,7 +383,11 @@ int scanMatrix_ISR(void) {
     return -1;
 }
 
-/* Callback de Interrupcao do Timer TIM2 (100 Hz / 10ms) */
+/**
+ * @brief  Callback acionada automaticamente pelo estouro do Timer TIM2 (100 Hz / 10ms).
+ * @param  htim Ponteiro para a estrutura de configuracao do Timer.
+ * @retval None.
+ */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if (htim->Instance == TIM2) {
         int current_key = scanMatrix_ISR();
@@ -385,7 +400,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
                 stable_valid_key = current_key;
                 uint8_t hid_report[8] = {0};
                 if (stable_valid_key != -1) {
-                    hid_report[2] = 0x68 + stable_valid_key; // F13 a F21
+                    hid_report[2] = 0x68 + stable_valid_key; // Scancodes F13 a F21
                 }
                 USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, hid_report, 8);
             }
@@ -393,6 +408,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     }
 }
 
+/**
+ * @brief  Funcao principal de inicializacao do sistema e loop de baixo consumo.
+ * @retval int Código de encerramento do programa.
+ */
 int main(void) {
     HAL_Init();
     SystemClock_Config();
@@ -451,6 +470,31 @@ int main(void) {
 \label{fig:assembly_final}
 \end{figure}
 
+\subsection{Testes de Validação e Resultados Experimentais}
+\hspace*{1.25cm}Com a conclusão da montagem física e da programação do firmware, uma bateria de testes sistemáticos foi conduzida no protótipo para validar sua integridade física e usabilidade operacional. Os ensaios foram segmentados em três etapas sequenciais:
+
+\subsubsection{Testes de Isolamento e Continuidade Elétrica}
+Antes de energizar o microcontrolador Blue Pill via porta USB, realizou-se a validação física das conexões elétricas. Utilizou-se um multímetro digital para verificar os seguintes parâmetros:
+\begin{itemize}
+    \item \textbf{Isolamento entre Linhas e Colunas:} Testou-se a resistência entre as linhas (\texttt{PA1}, \texttt{PA2}, \texttt{PA3}) e colunas (\texttt{PA4}, \texttt{PA5}, \texttt{PA6}), confirmando a resistência em circuito aberto ($\infty$), comprovando a ausência de curto-circuitos na fiação interna.
+    \item \textbf{Polarização dos Diodos Anti-Ghosting:} Mediu-se a condução dos 9 diodos $1\text{N}4148$, obtendo a queda de tensão de polarização direta entre $0,58\,\text{V}$ e $0,62\,\text{V}$ e bloqueio em polarização reversa.
+    \item \textbf{Continuidade dos Switches:} Ao pressionar cada uma das 9 teclas físicas, obteve-se resistência de contato entre $0,1\,\Omega$ e $0,3\,\Omega$, validando a soldagem dos interruptores.
+\end{itemize}
+
+\subsubsection{Teste de Enumeração do Barramento USB}
+O protótipo foi conectado via micro-USB ao computador hospedeiro para validar o barramento. Os resultados confirmaram:
+\begin{itemize}
+    \item \textbf{Estabilização de Clock:} Inicialização estável do cristal externo de $8\,\text{MHz}$ (HSE), gerando $72\,\text{MHz}$ SYSCLK e exatos $48\,\text{MHz}$ dedicados ao periférico USB.
+    \item \textbf{Enumeração no Sistema Operacional:} O Windows 10/11 identificou o dispositivo sob as credenciais Vendor ID (\texttt{VID}) \texttt{0x0483} (STMicroelectronics), Product ID (\texttt{PID}) \texttt{0x5750} (Custom HID Class) em Full-Speed ($12\,\text{Mbps}$).
+\end{itemize}
+
+\subsubsection{Validação Funcional e Troca Bidirecional de Dados}
+O ensaio integrado comprovou as duas vias de comunicação USB:
+\begin{itemize}
+    \item \textbf{Envio de Comandos (USB Custom HID IN):} O pressionamento de cada tecla transmitiu de forma instantânea o relatório de 8 Bytes com os scancodes de F13 a F21 (\texttt{0x68} a \texttt{0x70}), sem repetições indevidas devido ao filtro de $40\,\text{ms}$ em ISR.
+    \item \textbf{Recebimento de Dados (USB Custom HID OUT):} A aplicação hospedeira em Python enviou relatórios de saída (\textit{OUT Reports}) com comandos de troca de perfil, sendo interceptados com sucesso pelo STM32, comprovando o fluxo bidirecional de dados.
+\end{itemize}
+
 % ==============================================================================
 % 6. ANÁLISE DE CUSTOS
 % ==============================================================================
@@ -479,7 +523,30 @@ Carcaça produzida em impressão 3D & 1 & 50,00 & 50,00 \\ \midrule
 A partir do levantamento dos insumos detalhados na tabela acima, o custo total para a montagem do protótipo resultou em R\$ 128,73. Esse valor engloba tanto a parte eletrônica principal quanto a estrutura física e os itens de fixação. A carcaça e a placa STM32 representaram as maiores parcelas do orçamento, confirmando a viabilidade financeira do projeto.
 
 % ==============================================================================
-% 7. CONCLUSÃO
+% 7. LIMITAÇÕES E TRABALHOS FUTUROS
+% ==============================================================================
+\section{Limitações e Trabalhos Futuros}
+
+\subsection{Limitações do Projeto}
+\hspace*{1.25cm}Embora o protótipo do Stream Deck tenha atingido satisfatoriamente os objetivos propostos de controle e envio confiável de atalhos em tempo real, a versão atual do sistema apresenta limitações técnicas decorrentes do cronograma acadêmico e restrições materiais:
+
+\begin{enumerate}
+    \item \textbf{Montagem por Fiação Aérea:} Apesar de o layout da PCB ter sido completamente projetado e validado no KiCad em camada única (Face Simples \texttt{B.Cu}) com trilhas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$, limitações logísticas impediram a corrosão física da placa a tempo para a entrega. A montagem interna recorreu à fiação flexível ponto a ponto para a soldagem dos switches e diodos $1\text{N}4148$.
+    \item \textbf{Ausência de Feedback Visual Embarcado:} O hardware opera como um dispositivo puro de entrada USB Custom HID, carecendo de display físico embarcado na carcaça para indicação de perfil ativo, dependendo do monitoramento gerido na tela do computador pela aplicação Python.
+    \item \textbf{Dependência da Aplicação Hospedeira:} O microcontrolador envia os códigos genéricos de teclas (F13 a F21), requerendo a presença do serviço Python no computador hospedeiro para mapear os atalhos para ações específicas do sistema.
+\end{enumerate}
+
+\subsection{Trabalhos Futuros}
+\hspace*{1.25cm}Como diretrizes de engenharia para dar continuidade ao aprimoramento técnico do dispositivo, são propostos os seguintes trabalhos futuros:
+
+\begin{enumerate}
+    \item \textbf{Fabricação Física da PCB KiCad:} Proceder com a fabricação física do layout desenvolvido nas Figuras 2 e 3 por meio de corrosão artesanal (transferência térmica e Percloreto de Ferro), eliminando a fiação aérea.
+    \item \textbf{Integração de Display OLED:} Incorporar um display gráfico compacto (OLED SSD1306 via barramento I2C) na tampa da carcaça 3D para exibição dinâmica de perfis e nomes de macros atribuídos às teclas.
+    \item \textbf{Armazenamento Autônomo Local:} Desenvolver rotinas no firmware para gravação dinâmica em memória Flash interna ou chip de memória EEPROM externo via I2C/SPI, permitindo a portabilidade autônoma \textit{plug-and-play} em qualquer computador.
+\end{enumerate}
+
+% ==============================================================================
+% 8. CONCLUSÃO
 % ==============================================================================
 \section{Conclusão}
 \hspace*{1.25cm}O desenvolvimento do Stream Deck customizado demonstrou-se totalmente viável na integração entre a arquitetura de hardware e o projeto mecânico. A utilização do microcontrolador STM32F103C8T6 (Blue Pill), configurado via STM32CubeMX e programado com \textbf{Interrupção de Timer de Hardware (TIM2 a 100 Hz)} para operar como um dispositivo USB HID com clock ajustado em 48 MHz, assegurou a comunicação nativa e o disparo imediato de atalhos e macros no computador sem o uso de \textit{polling}. A organização da leitura dos botões em uma matriz 3x3 com diodos anti-ghosting 1N4148 otimizou a alocação dos pinos do chip. A PCB projetada em \textbf{face simples (\texttt{B.Cu}) com trilhas reforçadas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$} viabilizou a confecção artesanal. Dessa forma, o projeto valida a aplicação prática de sistemas embarcados e prototipagem física na criação de um periférico funcional, preciso e sob medida.
