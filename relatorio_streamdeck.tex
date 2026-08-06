@@ -1,9 +1,9 @@
 \documentclass[12pt, a4paper]{article}
 
 % --- PACOTES PRINCIPAIS ---
-\usepackage[utf8]{utf8}
+\usepackage[utf8]{inputenc}
 \usepackage[brazil]{babel}
-\usepackage[margin=2.0cm]{geometry}
+\usepackage[margin=2.5cm]{geometry}
 \usepackage{graphicx}
 \usepackage{amsmath, amsfonts, amssymb}
 \usepackage{xcolor}
@@ -66,29 +66,29 @@
 % ==============================================================================
 \begin{titlepage}
     \centering
-    \includegraphics[width=2.5cm]{dashboard/ufu_logo.png}\\[0.4cm]
+    \includegraphics[width=2.8cm]{dashboard/ufu_logo.png}\\[0.5cm]
     {\bfseries \Large UNIVERSIDADE FEDERAL DE UBERLÂNDIA}\\[0.2cm]
     {\bfseries \large FACULDADE DE ENGENHARIA ELÉTRICA — FEELT}\\[0.1cm]
-    {\small DISCIPLINA DE SISTEMAS EMBARCADOS I}\\[2.5cm]
+    {\small DISCIPLINA DE SISTEMAS EMBARCADOS I}\\[2.0cm]
 
-    \rule{\linewidth}{1.2pt}\\[0.4cm]
+    \rule{\linewidth}{1.5pt}\\[0.4cm]
     {\Huge \bfseries \color{primaryblue} RELATÓRIO TÉCNICO \& MEMORIAL DESCRITIVO}\\[0.3cm]
-    {\Large \bfseries STREAM DECK EMBARCADO COM MATRIZ 3x3, INTERRUPÇÃO POR TIMER DE HARDWARE E PCB FACE SIMPLES}\\[0.4cm]
-    \rule{\linewidth}{1.2pt}\\[2.5cm]
+    {\Large \bfseries PROJETO STREAM DECK EMBARCADO COM VARREDURA POR INTERRUPÇÃO DE TIMER, PCB FACE SIMPLES E NATIVA USB HID}\\[0.4cm]
+    \rule{\linewidth}{1.5pt}\\[2.0cm]
 
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.5\textwidth}
         \begin{flushleft} \large
-            \textbf{Discentes / Integrantes:}\\
-            Bruna de Jesus Silva — \texttt{12021ETE007}\\
+            \textbf{Discentes / Integrantes:}\\[0.2cm]
             Gustavo Martins Ribeiro Moura — \texttt{12111ETE002}\\
             Matheus Henrique Gonçalves — \texttt{12311ECP021}\\
             Vicenzo De Marco Olivalves — \texttt{12421ECP006}
         \end{flushleft}
     \end{minipage}
-    \begin{minipage}{0.48\textwidth}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
         \begin{flushright} \large
-            \textbf{Docente Responsável:}\\
-            Prof. Jeovane Reges\\[0.3cm]
+            \textbf{Docente Responsável:}\\[0.2cm]
+            Prof. Jeovane Reges\\[0.4cm]
             \textbf{Curso:}\\
             Engenharia de Computação\\
             \& Engenharia Eletrônica
@@ -101,145 +101,109 @@
 \end{titlepage}
 
 % ==============================================================================
-% RESUMO & ABSTRACT
+% RESUMO
 % ==============================================================================
 \section*{Resumo}
-Este relatório apresenta o projeto, desenvolvimento, implementação e validação de um periférico de entrada dedicado (*Stream Deck / Macro Pad*) baseado no microcontrolador ARM Cortex-M3 (STM32F103C8T6 - Blue Pill). O sistema implementa uma matriz de 9 teclas mecânicas (3x3) associada a diodos anti-ghosting $1\text{N}4148$, comunicando-se nativamente com o computador via protocolo USB Custom HID (*Human Interface Device*). O relatório especifica detalhadamente a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional). Em resposta estrita às diretrizes de projeto, o firmware foi totalmente construído sobre uma arquitetura orientada a interrupções de hardware por Timer (TIM2 a 100~Hz), eliminando completamente o consumo ineficiente de ciclos de CPU por *polling* no loop principal. Adicionalmente, a placa de circuito impresso (PCB) foi projetada no KiCad em camada única (*Single-Layer* em face simples `B.Cu`) com trilhas reforçadas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$, viabilizando a confecção artesanal e manual por transferência térmica e corrosão em Percloreto de Ferro.
+Este relatório apresenta o desenvolvimento, implementação e validação de um periférico de entrada dedicado (*Stream Deck / Macro Pad*) baseado no microcontrolador ARM Cortex-M3 (STM32F103C8T6 - Blue Pill). O dispositivo é composto por uma matriz 3x3 de teclas mecânicas acopladas a diodos anti-ghosting $1\text{N}4148$, operando nativamente como protocolo USB Custom HID (*Human Interface Device*). Em estrito atendimento às recomendações da banca, a arquitetura do firmware foi totalmente reformulada para operar **100\% sob Interrupção de Hardware por Timer (TIM2 a 100~Hz / 10~ms)** com filtro de debouncing por máquina de estados, eliminando o uso ineficiente de *polling* no loop principal. Adicionalmente, a placa de circuito impresso (PCB) foi projetada no KiCad em **camada única (Face Simples `B.Cu`)** com trilhas engrossadas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$, viabilizando a corrosão artesanal manual com Percloreto de Ferro.
 
-\textbf{Palavras-chave:} Sistemas Embarcados, STM32F103C8T6, Switches Mecânicos MX Blue, USB Custom HID, Interrupção de Timer, PCB Face Simples.
+\textbf{Palavras-chave:} Sistemas Embarcados, STM32F103C8T6, USB Custom HID, Interrupção por Timer (TIM2), PCB Face Simples.
 
 \newpage
 \tableofcontents
 \newpage
 
 % ==============================================================================
-% 1. INTRODUÇÃO E OBJETIVOS
+% 1. INTRODUÇÃO
 % ==============================================================================
-\section{Introdução e Objetivos}
+\section{Introdução}
+Os sistemas embarcados estão presentes em diversas aplicações tecnológicas, desempenhando funções específicas por meio da integração entre hardware e software. Esses sistemas são amplamente utilizados em dispositivos eletrônicos que exigem processamento dedicado, baixo consumo de energia e interação eficiente com o usuário, tornando-se fundamentais em áreas como automação, controle e interfaces inteligentes.
 
-\subsection{Contextualização}
-Os sistemas embarcados modernos exigem a integração de periféricos computacionais dedicados capazes de operar com alta eficiência temporal, baixo consumo de potência e comunicação transparente em tempo real com o sistema operacional hospedeiro. No âmbito da automação de estações de trabalho, estúdios de transmissão ao vivo (*broadcasting*) e ambientes de desenvolvimento de software, os dispositivos do tipo *Stream Deck* se consolidaram como ferramentas essenciais para execução instantânea de atalhos estendidos, ativação de macros e alternância de cenas multimídia.
+Neste contexto, o desenvolvimento de um *Stream Deck* representa uma aplicação prática dos conceitos estudados na disciplina de Sistemas Embarcados I da UFU/FEELT. O dispositivo consiste em um controlador com teclas programáveis, capaz de executar comandos previamente configurados, como abertura de programas, envio de atalhos de teclado (F13 a F21), controle de aplicações e automação de tarefas. Essa tecnologia é amplamente empregada por criadores de conteúdo, profissionais de transmissão ao vivo, designers e programadores.
 
-O desenvolvimento deste trabalho aplica conceitos fundamentais da disciplina de Sistemas Embarcados I da UFU/FEELT, integrando o projeto de hardware eletrônico, roteamento de placa de circuito impresso otimizada para confecção manual, firmware de baixo nível em linguagem C orientado a interrupções de hardware e comunicação nativa USB HID.
+O projeto proporcionou a aplicação de conhecimentos relacionados à programação de microcontroladores, integração de periféricos, comunicação entre dispositivos e desenvolvimento de interfaces de interação. Além disso, possibilitou compreender as etapas envolvidas na concepção, implementação e validação de um sistema embarcado funcional, reforçando a relação entre os conceitos teóricos abordados em sala de aula e sua aplicação prática.
+
+% ==============================================================================
+% 2. OBJETIVOS
+% ==============================================================================
+\section{Objetivos}
 
 \subsection{Objetivo Geral}
-Projetar, implementar e validar um *Stream Deck* físico com matriz 3x3 de teclas mecânicas utilizando o microcontrolador STM32F103C8T6, operando com varredura por Interrupção de Hardware via Timer TIM2, comunicação USB Custom HID bidirecional e PCB de face simples adequada para corrosão artesanal.
+Desenvolver um Stream Deck utilizando conceitos de sistemas embarcados, integrando hardware e software para criar um dispositivo capaz de executar comandos e automatizar tarefas por meio de teclas programáveis.
 
 \subsection{Objetivos Específicos}
 \begin{itemize}
-    \item \textbf{Especificação de Switches Compatíveis:} Especificar o padrão mecânico e dimensional dos switches aceitos no gabinete (estrada em formato cruz MX stem, encaixe $14\,\text{mm} \times 14\,\text{mm}$, tipo Outemu/Generic Blue Switch).
-    \item \textbf{Firmware por Interrupção:} Substituir completamente a abordagem ineficiente de *polling* no loop principal por amostragem periódica acionada pela ISR do Timer de hardware TIM2 (100 Hz / 10 ms).
-    \item \textbf{Debouncing Não-Bloqueante:} Implementar filtro de debouncing por máquina de estados temporal na rotina de interrupção, eliminando travamentos da CPU.
-    \item \textbf{PCB Face Simples para Confecção Manual:} Rotear a placa de circuito impresso no KiCad utilizando apenas a camada inferior (`B.Cu`), com trilhas engrossadas ($0.8\,\text{mm}$ a $1.2\,\text{mm}$) e espaçamento de segurança ($0.5\,\text{mm}$) otimizado para o método artesanal de transferência térmica.
-    \item \textbf{Comunicação USB HID Bidirecional:} Configurar os descritores USB HID para envio de *IN Reports* (scancodes F13 a F21) e recepção de *OUT Reports* para feedback visual do status do host.
+    \item Implementar a programação do microcontrolador responsável pelo gerenciamento das entradas por meio de **Interrupção de Timer de Hardware (TIM2)**, eliminando o *polling*.
+    \item Especificar a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional com encaixe $14\,\text{mm} \times 14\,\text{mm}$).
+    \item Desenvolver a PCB no KiCad em **Face Simples (Single Layer `B.Cu`)** com trilhas engrossadas ($0.8\,\text{mm}$ a $1.2\,\text{mm}$) para permitir a fabricação manual por corrosão em Percloreto de Ferro.
+    \item Integrar a comunicação USB Custom HID bidirecional para troca de relatórios IN e OUT com a aplicação em Python 3.
+    \item Consolidar a montagem física com carcaça impressa em 3D, insertos roscados M3 e parafusos M3x8mm.
 \end{itemize}
 
 % ==============================================================================
-% 2. MEMORIAL DESCRITIVO E ANÁLISE DE LIMITAÇÕES
+% 3. FUNDAMENTAÇÃO TEÓRICA
 % ==============================================================================
-\section{Memorial Descritivo, Justificativas e Limitações}
+\section{Fundamentação Teórica}
+Os sistemas embarcados são sistemas computacionais dedicados ao desempenho de funções específicas, integrando hardware e software em um único dispositivo. Diferentemente dos computadores de uso geral, esses sistemas são projetados para executar tarefas determinadas com alta eficiência, confiabilidade e baixo consumo de recursos.
 
-\subsection{Justificativa da Arquitetura do Hardware}
-A escolha do microcontrolador \textbf{STM32F103C8T6} (ARM Cortex-M3 de 32 bits rodando a 72~MHz) em relação a microcontroladores de 8 bits (como ATmega328P) fundamenta-se nas seguintes características:
-\begin{enumerate}
-    \item \textbf{Controlador USB 2.0 Full-Speed Integrado:} Possibilita a comunicação nativa em 12~Mbps sem a necessidade de chips conversores USB-Serial externos (como FT232R ou CH340), garantindo tempo de resposta na ordem de milissegundos e suporte nativo Plug-and-Play no Windows/Linux.
-    \item \textbf{Timers Avançados de 16-bits:} Recursos dedicados de temporização e contagem de eventos por interrupção, essenciais para a varredura da matriz sem causar atrasos no empacotamento USB.
-    \item \textbf{Portas GPIO com Configuração Open-Drain:} As linhas da matriz operam em modo `GPIO_MODE_OUTPUT_OD`, garantindo isolamento quando inativas (alta impedância Hi-Z) e impedindo curtos-circuitos durante acionamentos simultâneos de teclas.
-\end{enumerate}
+O funcionamento do Stream Deck baseia-se na leitura do estado das teclas por um microcontrolador, que interpreta cada acionamento e envia o comando correspondente ao computador. Para garantir o correto funcionamento do teclado, utiliza-se uma matriz de teclas associada a diodos $1\text{N}4148$, evitando o fenômeno conhecido como *ghosting*, que pode provocar o reconhecimento incorreto de múltiplas teclas pressionadas simultaneamente.
 
-\subsection{Especificação Dimensional e Compatibilidade dos Switches Mecânicos}
-Um aspecto fundamental de projeto mecânico e eletromecânico é a especificação exata dos botões/switches compatíveis com a carcaça 3D e a PCB do Stream Deck. \textbf{O dispositivo não é compatível com qualquer tipo de botão ou chave mecânica comercial}.
-
-Para a confecção do protótipo, utilizaram-se **Switches Mecânicos Genéricos do Padrão Cherry MX (Modelo Blue Switch, adquiridos no Mercado Livre / marcas como Outemu, Huano ou Kailh)**. A Tabela~\ref{tab:switches} detalha as restrições geométricas e operacionais:
-
-\begin{table}[H]
-\centering
-\caption{Especificações Geométricas e Eletromecânicas dos Switches Compatíveis}
-\label{tab:switches}
-\begin{tabular}{@{}p{5cm}p{10.5cm}@{}}
-\toprule
-\textbf{Parâmetro Mecânico} & \textbf{Especificação Técnica Obrigatória} \\ \midrule
-\textbf{Padrão de Haste (Stem)} & Encaixe em formato de Cruz (\textit{MX Cross Stem} $+$, diâmetro $4.1\,\text{mm}$). \\
-\textbf{Dimensão da Janela (Plate Cutout)} & Recorte retangular exato de $14.0\,\text{mm} \times 14.0\,\text{mm}$ na carcaça 3D. \\
-\textbf{Fixação de Pinos (Pin Layout)} & Padrão de 3 pinos (\textit{Plate Mount}: 2 pinos de solda + 1 pino central de guia). \\
-\textbf{Distância de Atuação / Curso} & Curso total de $4.0\,\text{mm}$, ponto de atuação tátil em $2.0\,\text{mm}$. \\
-\textbf{Força de Atuação} & $60\,\text{g} \pm 15\,\text{g}$ com feedback tátil e sonoro (\textit{Clicky Blue}). \\
-\textbf{Incompatibilidades Conhecidas} & Switches perfil baixo (\textit{Kailh Choc}), chaves de membrana, botões táticos de micro-pressão ($6\times6\,\text{mm}$) ou chaves industriais sem haste MX. \\ \bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Topologia de Matriz 3x3 com Diodos Anti-Ghosting}
-Para ler 9 chaves mecânicas utilizando o menor número possível de pinos do microcontrolador, adotou-se a matriz multiplexada de 3 linhas ($PA1, PA2, PA3$) por 3 colunas ($PA4, PA5, PA6$), reduzindo a alocação de 9 pinos dedicados para apenas 6 pinos GPIO. Cada tecla mecânica foi associada em série com um diodo de sinal \textbf{1N4148}, impedindo o efeito de \textit{ghosting}.
-
-\subsection{Análise de Características e Limitações do Projeto}
-\begin{table}[H]
-\centering
-\caption{Matriz de Características e Limitações Técnicas do Sistema}
-\label{tab:limitacoes}
-\begin{tabular}{@{}p{4.5cm}p{11cm}@{}}
-\toprule
-\textbf{Categoria} & \textbf{Descrição Técnica} \\ \midrule
-\textbf{Frequência da CPU} & 72 MHz (Cristal HSE de 8 MHz com PLL $\times 9$). \\
-\textbf{Clock do Periférico USB} & 48 MHz (Prescaler PLL / 1.5 - Exigência obrigatória USB Full-Speed). \\
-\textbf{Taxa de Amostragem} & 100 Hz (Interrupção de hardware por Timer TIM2 a cada 10 ms). \\
-\textbf{Janela de Debouncing} & 40 ms estabilizados por máquina de estados sem bloqueio de loop. \\
-\textbf{Compatibilidade de Chaves} & Exclusiva para Switches Mecânicos padrão Cherry MX / Outemu Blue (3-pin). \\
-\textbf{Limitação de Camada PCB} & Projeto restrito a 1 camada de cobre (`B.Cu`) para possibilitar confecção artesanal com Percloreto de Ferro. \\ \bottomrule
-\end{tabular}
-\end{table}
+Outro aspecto importante do projeto é a integração entre os componentes mecânicos e eletrônicos. Os switches mecânicos (especificados no padrão Cherry MX / Outemu Blue com encaixe $14\,\text{mm} \times 14\,\text{mm}$ e força de atuação de $60\,\text{g}$) proporcionam maior precisão e durabilidade em relação aos botões convencionais. A estrutura física do dispositivo é produzida por manufatura aditiva (impressão 3D), permitindo a fabricação de uma carcaça personalizada, de baixo custo e adequada às dimensões do circuito eletrônico.
 
 % ==============================================================================
-% 3. COMUNICAÇÃO BIDIRECIONAL E INTERFACE PYTHON
+% 4. MATERIAIS E METODOLOGIA
 % ==============================================================================
-\section{Comunicação Bidirecional USB Custom HID}
+\section{Materiais e Metodologia}
+O desenvolvimento do projeto foi dividido em etapas que envolveram o planejamento do dispositivo, a montagem do circuito eletrônico no KiCad, a programação do microcontrolador STM32, a fabricação da estrutura mecânica em impressão 3D e a realização dos testes de funcionamento.
 
-\subsection{Descritor do Pacote de 8 Bytes (IN Report)}
-O protocolo USB Custom HID foi configurado para transmitir pacotes de relatórios padrão de teclado de 8 Bytes via o EndPoint de interrupção `EP1 IN`:
-\begin{table}[H]
-\centering
-\caption{Estrutura do Pacote de Relatório USB HID (8 Bytes)}
-\label{tab:usb_packet}
-\begin{tabular}{c l l}
-\toprule
-\textbf{Byte} & \textbf{Campo} & \textbf{Conteúdo / Função} \\ \midrule
-Byte 0 & Modificadores & Teclas especiais (Ctrl, Shift, Alt, GUI) -> 0x00 \\
-Byte 1 & Reservado & Byte de alinhamento USB -> 0x00 \\
-Byte 2 & Keycode Primário & Código Hexadecimal da tecla: F13 (\texttt{0x68}) até F21 (\texttt{0x70}) \\
-Byte 3..7 & Keycodes Adicionais & Suporte para rollover de múltiplas teclas simultâneas -> 0x00 \\ \bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Troca Bidirecional de Informações (Host <-> STM32)}
-1. \textbf{Canal IN (STM32 -> PC):} O dispositivo dispara o pacote de 8 Bytes contendo o scancode estendido sempre que a máquina de estados confirma a estabilidade de uma tecla.
-2. \textbf{Canal OUT (PC -> STM32):} O servidor em Python 3 envia pacotes de resposta (*OUT Reports*) informando alterações de estado no sistema hospedeiro (como status do microfone mutado, alteração de cena de vídeo ou avisos de alarme).
+\subsection{Materiais Utilizados}
+\begin{itemize}
+    \item 9 switches mecânicos genéricos (Padrão Cherry MX / Outemu Blue de 3 pinos);
+    \item 9 diodos de sinal 1N4148;
+    \item Microcontrolador STM32F103C8T6 (Blue Pill - ARM Cortex-M3 @ 72 MHz);
+    \item Fios para ligação elétrica;
+    \item 4 insertos roscados M3 em latão;
+    \item 4 parafusos M3 de 8 mm;
+    \item Fita isolante espumada;
+    \item Carcaça produzida em impressão 3D.
+\end{itemize}
 
 % ==============================================================================
-% 4. PROJETO ELETRÔNICO E PCB FACE SIMPLES PARA CONFECÇÃO MANUAL
+% 5. RESULTADOS E DISCUSSÃO
 % ==============================================================================
-\section{Projeto Eletrônico e PCB de Face Simples (KiCad)}
+\section{Resultados e Discussão}
+Nesta seção são apresentados os principais resultados obtidos durante o desenvolvimento do Stream Deck, contemplando as etapas de projeto eletrônico no KiCad, configuração do microcontrolador no STM32CubeMX, implementação do firmware por interrupção e montagem física.
 
-A placa de circuito impresso foi projetada no KiCad alocando o roteamento exclusivamente na camada inferior (`B.Cu`), com trilhas engrossadas ($0.8\,\text{mm}$ a $1.2\,\text{mm}$) e ilhas de solda (*Pads*) ampliadas para percloreto de ferro.
+\subsection{Projeto Eletrônico no KiCad (PCB Face Simples Manual)}
+A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétrico e do layout da placa de circuito impresso utilizando o software KiCad. Atendendo à solicitação do professor, o layout da placa foi desenvolvido exclusivamente na **camada inferior de cobre (`B.Cu` - Face Simples)**, facilitando o processo de confecção artesanal por transferência térmica. As trilhas foram engrossadas para larguras entre **$0.8\,\text{mm}$ (31,5 mils)** e **$1.2\,\text{mm}$ (47,2 mils)** com espaçamento de segurança de **$0.5\,\text{mm}$**, eliminando riscos de rompimento ou curto-circuito na corrosão por Percloreto de Ferro.
 
-% ==============================================================================
-% 5. FIRMWARE ORIENTADO A INTERRUPÇÃO DE HARDWARE (TIM2 TIMER)
-% ==============================================================================
-\section{Firmware STM32 Baseado em Interrupção por Hardware}
+\subsection{Configuração e Programação no STM32CubeMX}
+Após a definição do circuito eletrônico, foi realizada a configuração do microcontrolador por meio do software STM32CubeMX. As portas GPIO foram alocadas da seguinte forma:
+\begin{itemize}
+    \item **Linhas (LINE\_1 a LINE\_3):** Pinos `PA1`, `PA2`, `PA3` configurados como `GPIO_MODE_OUTPUT_OD` (Open Drain).
+    \item **Colunas (COL\_1 a COL\_3):** Pinos `PA4`, `PA5`, `PA6` configurados como `GPIO_MODE_INPUT` com `GPIO_PULLUP` interno.
+    \item **Comunicação USB HID:** Pinos `PA11` (USB\_DM) e `PA12` (USB\_DP) configurados na classe Custom HID.
+    \item **Interface de Gravação SWD:** Pinos `PA13` (SYS\_JTMS-SWDIO) e `PA14` (SYS\_JTCK-SWCLK).
+\end{itemize}
 
-\subsection{Fluxograma do Firmware}
-A Figura~\ref{fig:fluxograma} ilustra o fluxo de execução do firmware alimentado pela interrupção periódica do Timer TIM2.
+A árvore de clock do sistema foi configurada utilizando o oscilador cristal externo (HSE) de 8 MHz com multiplicador PLL $\times 9$, resultando em uma frequência principal de **72 MHz (SYSCLK)**. Para o correto funcionamento do periférico USB Full-Speed (12 Mbps), aplicou-se o divisor dedicado USB de `/1.5`, gerando exatos **48 MHz (USBCLK)**. O barramento APB1 foi ajustado com prescaler `/2` para respeitar o limite de 36 MHz.
+
+\subsection{Varredura da Matriz por Interrupção de Timer (TIM2)}
+Para atender integralmente à exigência de eliminar o *polling* no `while(1)`, o timer de hardware **TIM2** foi configurado com prescaler 7199 e período 99, gerando interrupções periódicas de hardware a cada **10 ms (100 Hz)**. 
+
+A cada estouro do Timer, a função `HAL_TIM_PeriodElapsedCallback()` é acionada automaticamente pelo hardware, executando a varredura da matriz 3x3 e o filtro de debouncing de 40 ms por máquina de estados. O loop principal no `main()` permanece 100\% ocioso executando a instrução de baixo consumo `__WFI()` (*Wait For Interrupt*).
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[node distance=1.5cm, auto, scale=0.85, transform shape]
+\begin{tikzpicture}[node distance=1.4cm, auto, scale=0.85, transform shape]
     \node (start) [draw, ellipse, fill=primaryblue!20] {Início (Power-On)};
     \node (init) [draw, rectangle, below of=start] {Inicialização: Clock 72MHz, GPIO, USB, TIM2 (100Hz)};
     \node (starttim) [draw, rectangle, below of=init] {Ativa \texttt{HAL\_TIM\_Base\_Start\_IT(\&htim2)}};
     \node (idle) [draw, rectangle, fill=yellow!20, below of=starttim] {CPU em Low-Power Idle (\texttt{\_\_WFI()})};
-    \node (isr) [draw, rectangle, fill=green!20, right=3cm of idle] {ISR do Timer TIM2 (\texttt{10ms / 100Hz})};
+    \node (isr) [draw, rectangle, fill=green!20, right=2.8cm of idle] {ISR do Timer TIM2 (\texttt{10ms / 100Hz})};
     \node (scan) [draw, rectangle, below of=isr] {Varre Matriz 3x3 (Linhas OD / Colunas PullUp)};
     \node (debounce) [draw, decision, below of=scan, aspect=2] {Sinal Estável > 40ms?};
     \node (sendusb) [draw, rectangle, fill=cyan!20, below of=debounce] {Envia Report USB HID (F13..F21)};
-    \node (return) [draw, ellipse, fill=gray!20, left=3cm of sendusb] {Retorna ao Idle (\texttt{\_\_WFI()})};
+    \node (return) [draw, ellipse, fill=gray!20, left=2.8cm of sendusb] {Retorna ao Idle (\texttt{\_\_WFI()})};
 
     \draw [arrow, ->] (start) -- (init);
     \draw [arrow, ->] (init) -- (starttim);
@@ -248,7 +212,7 @@ A Figura~\ref{fig:fluxograma} ilustra o fluxo de execução do firmware alimenta
     \draw [arrow, ->] (isr) -- (scan);
     \draw [arrow, ->] (scan) -- (debounce);
     \draw [arrow, ->] (debounce) -- node [near start] {Sim} (sendusb);
-    \draw [arrow, ->] (debounce.west) -- ++(-1.5,0) |- node [near start] {Não} (return);
+    \draw [arrow, ->] (debounce.west) -- ++(-1.2,0) |- node [near start] {Não} (return);
     \draw [arrow, ->] (sendusb) -- (return);
     \draw [arrow, ->] (return) -- (idle);
 \end{tikzpicture}
@@ -261,7 +225,6 @@ A Figura~\ref{fig:fluxograma} ilustra o fluxo de execução do firmware alimenta
 /* 
  * Firmware Stream Deck - STM32F103C8T6 (Sistemas Embarcados I - UFU)
  * Varredura de Matriz 3x3 realizada 100% via Interrupcao por Timer TIM2 (100 Hz)
- * Compativel com Switches Mecanicos Genericos MX Blue (3-pin)
  */
 #include "main.h"
 #include "usb_device.h"
@@ -276,6 +239,7 @@ volatile int last_raw_key = -1;
 volatile int stable_valid_key = -1;
 volatile uint32_t sample_ticks = 0;
 
+/* Varredura executada dentro do contexto de ISR */
 int scanMatrix_ISR(void) {
     for (int r = 0; r < 3; r++) {
         HAL_GPIO_WritePin(GPIOA, rowPins[r], GPIO_PIN_RESET);
@@ -290,6 +254,7 @@ int scanMatrix_ISR(void) {
     return -1;
 }
 
+/* Callback de Interrupcao do Timer TIM2 (100 Hz / 10ms) */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if (htim->Instance == TIM2) {
         int current_key = scanMatrix_ISR();
@@ -302,7 +267,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
                 stable_valid_key = current_key;
                 uint8_t hid_report[8] = {0};
                 if (stable_valid_key != -1) {
-                    hid_report[2] = 0x68 + stable_valid_key;
+                    hid_report[2] = 0x68 + stable_valid_key; // F13 a F21
                 }
                 USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, hid_report, 8);
             }
@@ -317,7 +282,7 @@ int main(void) {
     MX_USB_DEVICE_Init();
     MX_TIM2_Init();
 
-    HAL_TIM_Base_Start_IT(&htim2);
+    HAL_TIM_Base_Start_IT(&htim2); // Ativa Interrupcao TIM2 (100Hz)
 
     while (1) {
         __WFI(); // CPU em Idle (Wait For Interrupt)
@@ -325,34 +290,42 @@ int main(void) {
 }
 \end{lstlisting}
 
+\subsection{Montagem Física do Protótipo}
+Após a definição do circuito eletrônico e da programação do microcontrolador, foi realizada a montagem física do Stream Deck. Inicialmente, foi confeccionada uma carcaça por meio de impressão 3D, projetada para acomodar os switches mecânicos, o microcontrolador Blue Pill e os demais componentes do sistema.
+
+Em seguida, os nove switches mecânicos foram instalados na carcaça e interligados aos diodos 1N4148 por meio de soldagem. As conexões elétricas entre os switches, os diodos e as portas GPIO do microcontrolador foram realizadas utilizando fios de ligação. Para garantir a fixação dos componentes, o microcontrolador foi preso à base da carcaça com fita dupla-face espumada. Além disso, foram utilizados insertos roscados M3 e parafusos M3 de 8 mm para unir a tampa e a base da estrutura, proporcionando maior resistência mecânica e facilitando futuras manutenções.
+
 % ==============================================================================
 % 6. ANÁLISE DE CUSTOS
 % ==============================================================================
-\section{Análise de Custos do Protótipo}
+\section{Análise de Custos}
+A análise de custos do projeto foi realizada considerando os principais componentes utilizados na construção do protótipo do Stream Deck. O objetivo foi estimar o investimento necessário para o desenvolvimento de uma unidade funcional. A Tabela~\ref{tab:custos} apresenta os componentes empregados e seus custos.
 
 \begin{table}[H]
 \centering
-\caption{Planilha de Custos dos Componentes do Protótipo}
+\caption{Estimativa de Custos dos Materiais Utilizados}
 \label{tab:custos}
 \begin{tabular}{@{}lcrr@{}}
 \toprule
 \textbf{Componente} & \textbf{Quantidade} & \textbf{Valor Unitário (R\$)} & \textbf{Valor Total (R\$)} \\ \midrule
-Switches Mecânicos Genéricos MX Blue (Mercado Livre) & 9 & 2,84 & 25,56 \\
-Diodos de Sinal 1N4148 & 9 & 0,20 & 1,80 \\
-Microcontrolador STM32F103C8T6 (Blue Pill) & 1 & 40,00 & 40,00 \\
-Fios e Condutores de Conexão & 1,5 metros & 1,80 & 2,70 \\
-Insertos Roscados M3 em Latão & 4 & 0,65 & 2,67 \\
+Switch Mecânico Genérico MX Blue & 9 & 2,84 & 25,56 \\
+Diodo 1N4148 & 9 & 0,20 & 1,80 \\
+Microcontrolador Blue Pill & 1 & 40,00 & 40,00 \\
+Fios de Ligação & 1,5 metros & 1,80 (1m) & 2,70 \\
+Inserto Roscado M3 & 4 & 0,65 & 2,67 \\
 Fita Isolante Espumada & 1 & 4,00 & 4,00 \\
-Parafusos M3 $\times$ 8mm & 4 & 0,50 & 2,00 \\
-Carcaça Personalizada em Impressão 3D & 1 & 50,00 & 50,00 \\ \midrule
-\textbf{Custo Total do Protótipo} & & & \textbf{R\$ 128,73} \\ \bottomrule
+Parafuso M3 $\times$ 8mm & 4 & 0,50 & 2,00 \\
+Carcaça produzida em impressão 3D & 1 & 50,00 & 50,00 \\ \midrule
+\textbf{Custo Total} & & & \textbf{R\$ 128,73} \\ \bottomrule
 \end{tabular}
 \end{table}
+
+A partir do levantamento dos insumos detalhados na tabela acima, o custo total para a montagem do protótipo resultou em R\$ 128,73. Esse valor engloba tanto a parte eletrônica principal quanto a estrutura física e os itens de fixação. A carcaça e a placa STM32 representaram as maiores parcelas do orçamento, confirmando a viabilidade financeira do projeto.
 
 % ==============================================================================
 % 7. CONCLUSÃO
 % ==============================================================================
 \section{Conclusão}
-O redesenho e a restruturação completa deste trabalho atenderam integralmente a todas as observações apontadas pela banca examinadora, especificando com clareza a compatibilidade mecânica dos switches (Cherry MX / Outemu Blue de 3 pinos), a arquitetura por **Interrupção de Timer de Hardware (TIM2 a 100 Hz)**, e a PCB em **face simples com trilhas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$**. O trabalho consolida de forma robusta e profissional todos os requisitos acadêmicos da disciplina de Sistemas Embarcados I da FEELT/UFU.
+O desenvolvimento do Stream Deck customizado demonstrou-se totalmente viável na integração entre a arquitetura de hardware e o projeto mecânico. A utilização do microcontrolador STM32F103C8T6 (Blue Pill), configurado via STM32CubeMX e programado com **Interrupção de Timer de Hardware (TIM2 a 100 Hz)** para operar como um dispositivo USB HID com clock ajustado em 48 MHz, assegurou a comunicação nativa e o disparo imediato de atalhos e macros no computador sem o uso de *polling*. A organização da leitura dos botões em uma matriz 3x3 com diodos anti-ghosting 1N4148 otimizou a alocação dos pinos do chip. A PCB projetada em **face simples (`B.Cu`) com trilhas reforçadas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$** viabilizou a confecção artesanal. Dessa forma, o projeto valida a aplicação prática de sistemas embarcados e prototipagem física na criação de um periférico funcional, preciso e sob medida.
 
 \end{document}

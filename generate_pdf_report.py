@@ -3,10 +3,13 @@
 ==============================================================================
  GERADOR DO RELATÓRIO TÉCNICO OFICIAL STREAM DECK UFU/FEELT (PDF)
 ==============================================================================
- Converte e gera o documento em PDF completo atendendo a todas as observações
- e críticas do professor (Interrupções por Hardware, Timer TIM2, PCB Face Simples
- com trilhas grossas, comunicação bidirecional, especificação dos switches MX Blue
- e código C documentado).
+ Atende integralmente às exigências do professor:
+ 1. Removeu Bruna (Integrantes: Gustavo, Matheus, Vicenzo).
+ 2. Capa limpa e formatada no padrão oficial UFU/FEELT.
+ 3. Seções completas: Introdução, Objetivos, Fundamentação Teórica, Materiais/Metodologia,
+    Projeto KiCad (PCB Face Simples B.Cu 0,8-1,2mm), Configuração STM32CubeMX,
+    Varredura por Interrupção de Timer TIM2 (100 Hz ISR / Zero Polling), Montagem Física,
+    Análise de Custos (R$ 128,73) e Conclusão.
 """
 
 import os
@@ -14,7 +17,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image, HRFlowable, KeepTogether
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image, HRFlowable
 )
 from reportlab.pdfgen import canvas
 
@@ -74,7 +77,6 @@ def build_pdf_report(pdf_filename):
     # Colors
     c_primary = colors.HexColor("#232679")
     c_dark = colors.HexColor("#0f143c")
-    c_accent = colors.HexColor("#ffab00")
     c_text = colors.HexColor("#1f2937")
 
     # Custom Styles
@@ -82,22 +84,22 @@ def build_pdf_report(pdf_filename):
         'CoverTitle',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=20,
-        leading=24,
+        fontSize=18,
+        leading=22,
         textColor=c_primary,
         alignment=1, # Center
-        spaceAfter=15
+        spaceAfter=12
     )
 
     style_cover_sub = ParagraphStyle(
         'CoverSub',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=11,
-        leading=15,
+        fontSize=10.5,
+        leading=14,
         textColor=c_dark,
         alignment=1,
-        spaceAfter=25
+        spaceAfter=20
     )
 
     style_h1 = ParagraphStyle(
@@ -107,7 +109,7 @@ def build_pdf_report(pdf_filename):
         fontSize=13,
         leading=17,
         textColor=c_primary,
-        spaceBefore=12,
+        spaceBefore=14,
         spaceAfter=6,
         keepWithNext=True
     )
@@ -151,55 +153,64 @@ def build_pdf_report(pdf_filename):
 
     story = []
 
-    # CAPA
+    # =========================================================================
+    # CAPA OFICIAL LIMPA E FORMATADA
+    # =========================================================================
     story.append(Spacer(1, 10))
     logo_path = os.path.join(os.path.dirname(__file__), 'dashboard', 'ufu_logo.png')
     if os.path.exists(logo_path):
         story.append(Image(logo_path, width=70, height=70))
-        story.append(Spacer(1, 10))
+        story.append(Spacer(1, 15))
 
-    story.append(Paragraph("UNIVERSIDADE FEDERAL DE UBERLÂNDIA", ParagraphStyle('UFU', fontName='Helvetica-Bold', fontSize=12, alignment=1)))
+    story.append(Paragraph("UNIVERSIDADE FEDERAL DE UBERLÂNDIA", ParagraphStyle('UFU', fontName='Helvetica-Bold', fontSize=13, alignment=1)))
     story.append(Paragraph("FACULDADE DE ENGENHARIA ELÉTRICA — FEELT", ParagraphStyle('FEELT', fontName='Helvetica-Bold', fontSize=10, alignment=1)))
-    story.append(Paragraph("DISCIPLINA DE SISTEMAS EMBARCADOS I (PROF. JEOVANE REGES)", ParagraphStyle('DISC', fontName='Helvetica', fontSize=9, alignment=1)))
-    story.append(Spacer(1, 40))
+    story.append(Paragraph("DISCIPLINA DE SISTEMAS EMBARCADOS I", ParagraphStyle('DISC', fontName='Helvetica', fontSize=9, alignment=1)))
+    story.append(Spacer(1, 45))
 
-    story.append(HRFlowable(width="100%", thickness=2, color=c_primary, spaceBefore=0, spaceAfter=15))
-    story.append(Paragraph("RELATÓRIO TÉCNICO E MEMORIAL DESCRITIVO", style_cover_title))
-    story.append(Paragraph("STREAM DECK EMBARCADO COM MATRIZ 3x3, INTERRUPÇÃO POR TIMER DE HARDWARE E PCB FACE SIMPLES", style_cover_sub))
-    story.append(HRFlowable(width="100%", thickness=2, color=c_primary, spaceBefore=0, spaceAfter=40))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=c_primary, spaceBefore=0, spaceAfter=15))
+    story.append(Paragraph("RELATÓRIO TÉCNICO & MEMORIAL DESCRITIVO", style_cover_title))
+    story.append(Paragraph("PROJETO STREAM DECK EMBARCADO COM VARREDURA POR INTERRUPÇÃO DE TIMER, PCB FACE SIMPLES E NATIVA USB HID", style_cover_sub))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=c_primary, spaceBefore=0, spaceAfter=45))
 
-    team_text = """
-    <b>Discentes / Integrantes:</b><br/>
-    • Bruna de Jesus Silva — 12021ETE007<br/>
-    • Gustavo Martins Ribeiro Moura — 12111ETE002<br/>
-    • Matheus Henrique Gonçalves — 12311ECP021<br/>
-    • Vicenzo De Marco Olivalves — 12421ECP006
-    """
-    story.append(Paragraph(team_text, ParagraphStyle('Team', fontName='Helvetica', fontSize=10, leading=15)))
-    story.append(Spacer(1, 40))
+    team_data = [
+        [
+            Paragraph("<b>Discentes / Integrantes:</b><br/>• Gustavo Martins Ribeiro Moura — 12111ETE002<br/>• Matheus Henrique Gonçalves — 12311ECP021<br/>• Vicenzo De Marco Olivalves — 12421ECP006", ParagraphStyle('TLeft', fontName='Helvetica', fontSize=9.5, leading=14)),
+            Paragraph("<b>Docente Responsável:</b><br/>Prof. Jeovane Reges<br/><br/><b>Curso:</b><br/>Engenharia de Computação & Engenharia Eletrônica", ParagraphStyle('TRight', fontName='Helvetica', fontSize=9.5, leading=14))
+        ]
+    ]
+    t_team = Table(team_data, colWidths=[240, 240])
+    t_team.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+    ]))
+    story.append(t_team)
+    story.append(Spacer(1, 50))
     story.append(Paragraph("Uberlândia — MG<br/>30 de julho de 2026", ParagraphStyle('Date', fontName='Helvetica', fontSize=9, alignment=1)))
     story.append(PageBreak())
 
-    # RESUMO
+    # =========================================================================
+    # RESUMO & SUMÁRIO
+    # =========================================================================
     story.append(Paragraph("Resumo", style_h1))
     resumo_text = """
-    Este relatório apresenta a reestruturação e implementação completa do projeto de um periférico de entrada dedicado (<b>Stream Deck / Macro Pad</b>) baseado no microcontrolador ARM Cortex-M3 (STM32F103C8T6 - Blue Pill). O sistema possui 9 teclas mecânicas (3x3) associadas a diodos anti-ghosting 1N4148, comunicando-se nativamente com o computador via protocolo USB Custom HID (<i>Human Interface Device</i>). O relatório especifica detalhadamente a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional). Atendendo às críticas do professor, o firmware foi reformulado para operar <b>100% sob Interrupção de Hardware por Timer (TIM2 a 100 Hz)</b>, eliminando completamente a leitura por polling no loop principal. Adicionalmente, a placa de circuito impresso (PCB) foi projetada no KiCad em <b>camada única (Face Simples B.Cu)</b> com trilhas reforçadas de <b>0,8 mm a 1,2 mm</b> e distância de segurança de 0,5 mm, viabilizando a fabricação artesanal e corrosão manual com Percloreto de Ferro.
+    Este relatório apresenta o desenvolvimento, implementação e validação de um periférico de entrada dedicado (<b>Stream Deck / Macro Pad</b>) baseado no microcontrolador ARM Cortex-M3 (STM32F103C8T6 - Blue Pill). O dispositivo é composto por uma matriz 3x3 de teclas mecânicas acopladas a diodos anti-ghosting 1N4148, operando nativamente como protocolo USB Custom HID (<i>Human Interface Device</i>). O relatório especifica a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional). Em estrito atendimento às recomendações da banca, a arquitetura do firmware foi totalmente reformulada para operar <b>100% sob Interrupção de Hardware por Timer (TIM2 a 100 Hz / 10 ms)</b> com filtro de debouncing por máquina de estados, eliminando o uso ineficiente de <i>polling</i> no loop principal. Adicionalmente, a placa de circuito impresso (PCB) foi projetada no KiCad em <b>camada única (Face Simples B.Cu)</b> com trilhas engrossadas de 0,8 mm a 1,2 mm, viabilizando a corrosão artesanal manual com Percloreto de Ferro.
     """
     story.append(Paragraph(resumo_text, style_body))
     story.append(Spacer(1, 10))
 
-    story.append(Paragraph("Sumário Executivo do Documento", style_h1))
+    story.append(Paragraph("Sumário Executivo", style_h1))
     sumario_data = [
         ["Seção", "Descrição do Conteúdo"],
-        ["1. Introdução e Objetivos", "Contextualização, escopo e metas específicas do projeto."],
-        ["2. Memorial Descritivo e Limitações", "Justificativas de hardware, compatibilidade de switches e limitações."],
-        ["3. Comunicação Bidirecional USB HID", "Descritor USB HID (IN/OUT Reports) e sincronização com Python."],
-        ["4. PCB Face Simples para Confecção Manual", "Roteamento B.Cu, trilhas reforçadas (0,8-1,2mm) e isolamento."],
-        ["5. Firmware por Interrupção de Timer (TIM2)", "Varredura 100Hz ISR, filtro debouncing não-bloqueante e código C."],
-        ["6. Análise de Custos e Viabilidade", "Planilha orçamentária detalhada dos insumos."],
-        ["7. Conclusão", "Síntese dos resultados obtidos."]
+        ["1. Introdução", "Contextualização e aplicação prática do Stream Deck."],
+        ["2. Objetivos", "Objetivo geral e objetivos específicos do projeto."],
+        ["3. Fundamentação Teórica", "Sistemas embarcados, matriz 3x3, diodos 1N4148 e switches MX Blue."],
+        ["4. Materiais e Metodologia", "Lista detalhada de materiais e processo de montagem."],
+        ["5. Resultados e Discussão", "KiCad Face Simples B.Cu (0,8-1,2mm), STM32CubeMX, TIM2 ISR e Código C."],
+        ["6. Análise de Custos", "Tabela orçamentária dos materiais (Total: R$ 128,73)."],
+        ["7. Conclusão", "Síntese dos resultados e conformidade aos requisitos."]
     ]
-    t_sumario = Table(sumario_data, colWidths=[130, 350])
+    t_sumario = Table(sumario_data, colWidths=[140, 340])
     t_sumario.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), c_primary),
         ('TEXTCOLOR', (0,0), (-1,0), colors.white),
@@ -211,78 +222,52 @@ def build_pdf_report(pdf_filename):
     story.append(t_sumario)
     story.append(Spacer(1, 15))
 
+    # =========================================================================
     # 1. INTRODUÇÃO
-    story.append(Paragraph("1. Introdução e Objetivos", style_h1))
-    story.append(Paragraph("O desenvolvimento de periféricos computacionais dedicados é um dos pilares práticos da engenharia de Sistemas Embarcados. Este projeto aborda a criação de um <i>Stream Deck</i> de 9 teclas mecânicas controlado pela placa STM32F103C8T6 (ARM Cortex-M3), unindo o projeto de hardware, confecção de placa de circuito impresso (PCB) artesanal e desenvolvimento de firmware de baixo nível.", style_body))
+    # =========================================================================
+    story.append(Paragraph("1. Introdução", style_h1))
+    story.append(Paragraph("Os sistemas embarcados estão presentes em diversas aplicações tecnológicas, desempenhando funções específicas por meio da integração entre hardware e software. Esses sistemas são amplamente utilizados em dispositivos eletrônicos que exigem processamento dedicado, baixo consumo de energia e interação eficiente com o usuário, tornando-se fundamentais em áreas como automação, controle e interfaces inteligentes.", style_body))
+    story.append(Paragraph("Neste contexto, o desenvolvimento de um Stream Deck representa uma aplicação prática dos conceitos estudados na disciplina de Sistemas Embarcados I da UFU/FEELT. O dispositivo consiste em um controlador com teclas programáveis, capaz de executar comandos previamente configurados, como abertura de programas, envio de atalhos de teclado (F13 a F21), controle de aplicações e automação de tarefas. Essa tecnologia é amplamente empregada por criadores de conteúdo, profissionais de transmissão ao vivo, designers e programadores.", style_body))
 
-    story.append(Paragraph("1.1 Objetivo Geral", style_h2))
-    story.append(Paragraph("Desenvolver um Stream Deck embarcado integrado por hardware e software, apresentando varredura por Interrupção de Hardware de Timer (TIM2 a 100 Hz), comunicação USB Custom HID bidirecional, e PCB de face simples adequada para corrosão artesanal.", style_body))
+    # =========================================================================
+    # 2. OBJETIVOS
+    # =========================================================================
+    story.append(Paragraph("2. Objetivos", style_h1))
+    story.append(Paragraph("2.1 Objetivo Geral", style_h2))
+    story.append(Paragraph("Desenvolver um Stream Deck utilizando conceitos de sistemas embarcados, integrando hardware e software para criar um dispositivo capaz de executar comandos e automatizar tarefas por meio de teclas programáveis.", style_body))
 
-    story.append(Paragraph("1.2 Objetivos Específicos", style_h2))
-    story.append(Paragraph("• <b>Especificação de Switches Compatíveis:</b> Especificar a compatibilidade mecânica dos switches aceitos no gabinete (haste em formato de cruz MX stem, encaixe 14mm x 14mm, tipo Outemu/Generic Blue Switch de 3 pinos).<br/>• <b>Eliminação de Polling:</b> Substituir a leitura por polling por amostragem periódica acionada pela ISR do Timer de hardware TIM2 (100 Hz / 10 ms).<br/>• <b>Debouncing por Máquina de Estados:</b> Implementar a filtragem temporal na ISR sem congelar a CPU.<br/>• <b>PCB Face Simples Manual:</b> Roteamento na camada inferior (<code>B.Cu</code>) com trilhas grossas (0,8 mm a 1,2 mm) para transferência térmica.", style_body))
+    story.append(Paragraph("2.2 Objetivos Específicos", style_h2))
+    story.append(Paragraph("• Implementar a programação do microcontrolador responsável pelo gerenciamento das entradas por meio de <b>Interrupção de Timer de Hardware (TIM2)</b>, eliminando o polling.<br/>• Especificar a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional com encaixe 14mm x 14mm).<br/>• Desenvolver a PCB no KiCad em <b>Face Simples (Single Layer B.Cu)</b> com trilhas engrossadas (0,8 mm a 1,2 mm) para permitir a fabricação manual por corrosão em Percloreto de Ferro.<br/>• Integrar a comunicação USB Custom HID bidirecional para troca de relatórios IN e OUT com a aplicação em Python 3.<br/>• Consolidar a montagem física com carcaça impressa em 3D, insertos roscados M3 e parafusos M3x8mm.", style_body))
 
-    # 2. MEMORIAL DESCRITIVO E COMPATIBILIDADE DE SWITCHES
-    story.append(Paragraph("2. Memorial Descritivo, Justificativas e Limitações", style_h1))
-    story.append(Paragraph("<b>Justificativa do Microcontrolador:</b> O STM32F103C8T6 (72 MHz, 32-bit ARM Cortex-M3) possui periférico USB 2.0 Full-Speed integrado e timers de 16 bits. Sua capacidade de chaveamento Open-Drain nas GPIOs (<code>PA1..PA3</code>) é essencial para isolar as linhas da matriz sem provocar curtos-circuitos durante pressionamentos simultâneos.", style_body))
+    # =========================================================================
+    # 3. FUNDAMENTAÇÃO TEÓRICA
+    # =========================================================================
+    story.append(Paragraph("3. Fundamentação Teórica", style_h1))
+    story.append(Paragraph("Os sistemas embarcados são sistemas computacionais dedicados ao desempenho de funções específicas, integrando hardware e software em um único dispositivo. Diferentemente dos computadores de uso geral, esses sistemas são projetados para executar tarefas determinadas com alta eficiência, confiabilidade e baixo consumo de recursos.", style_body))
+    story.append(Paragraph("O funcionamento do Stream Deck baseia-se na leitura do estado das teclas por um microcontrolador, que interpreta cada acionamento e envia o comando correspondente ao computador. Para garantir o correto funcionamento do teclado, utiliza-se uma matriz de teclas associada a diodos 1N4148, evitando o fenômeno conhecido como <i>ghosting</i>, que pode provocar o reconhecimento incorreto de múltiplas teclas pressionadas simultaneamente.", style_body))
+    story.append(Paragraph("Os switches mecânicos (especificados no padrão Cherry MX / Outemu Blue com encaixe 14 mm x 14 mm e força de atuação de 60g) proporcionam maior precisão e durabilidade em relação aos botões convencionais. A estrutura física do dispositivo é produzida por manufatura aditiva (impressão 3D), permitindo a fabricação de uma carcaça personalizada, de baixo custo e adequada às dimensões do circuito eletrônico.", style_body))
 
-    story.append(Paragraph("2.1 Compatibilidade Mecânica dos Switches (Cherry MX / Outemu Blue)", style_h2))
-    story.append(Paragraph("Conforme orientação do professor, é necessário esclarecer que <b>o dispositivo não é compatível com qualquer tipo de tecla comercial</b>. Para a construção do protótipo, utilizaram-se <b>Switches Mecânicos Genéricos do padrão Cherry MX (Modelo Blue Switch de 3 pinos, amplamente disponíveis no Mercado Livre / marcas como Outemu, Huano ou Kailh)</b>.", style_body))
+    # =========================================================================
+    # 4. MATERIAIS E METODOLOGIA
+    # =========================================================================
+    story.append(Paragraph("4. Materiais e Metodologia", style_h1))
+    story.append(Paragraph("O desenvolvimento do projeto foi dividido em etapas que envolveram o planejamento do dispositivo, a montagem do circuito eletrônico no KiCad, a programação do microcontrolador STM32, a fabricação da estrutura mecânica em impressão 3D e a realização dos testes de funcionamento.", style_body))
+    story.append(Paragraph("<b>Lista de Materiais Utilizados:</b><br/>• 9 switches mecânicos genéricos (Padrão Cherry MX / Outemu Blue de 3 pinos);<br/>• 9 diodos de sinal 1N4148;<br/>• Microcontrolador STM32F103C8T6 (Blue Pill - ARM Cortex-M3 @ 72 MHz);<br/>• Fios para ligação elétrica;<br/>• 4 insertos roscados M3 em latão;<br/>• 4 parafusos M3 de 8 mm;<br/>• Fita isolante espumada;<br/>• Carcaça produzida em impressão 3D.", style_body))
 
-    switch_data = [
-        ["Parâmetro Mecânico", "Especificação Técnica Obrigatória"],
-        ["Padrão de Haste (Stem)", "Encaixe em formato de Cruz (MX Cross Stem +, diâmetro 4,1 mm)."],
-        ["Janela de Fixação (Plate Cutout)", "Recorte retangular exato de 14.0 mm x 14.0 mm na carcaça 3D."],
-        ["Fixação de Pinos (Pin Layout)", "Padrão de 3 pinos (Plate Mount: 2 pinos de solda + 1 guia central)."],
-        ["Curso e Ponto de Atuação", "Curso total de 4,0 mm, ponto de atuação tátil em 2,0 mm."],
-        ["Força de Atuação", "60g com feedback tátil e sonoro característico (Clicky Blue)."],
-        ["Switches Incompatíveis", "Switches perfil baixo (Kailh Choc), membranas, chave micro-tact 6x6mm."]
-    ]
-    t_switch = Table(switch_data, colWidths=[140, 340])
-    t_switch.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), c_dark),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0,0), (-1,-1), 8),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#cbd5e1")),
-    ]))
-    story.append(t_switch)
-    story.append(Spacer(1, 10))
+    # =========================================================================
+    # 5. RESULTADOS E DISCUSSÃO
+    # =========================================================================
+    story.append(Paragraph("5. Resultados e Discussão", style_h1))
 
-    story.append(Paragraph("2.2 Matriz de Limitações Técnicas", style_h2))
-    limit_data = [
-        ["Parâmetro / Característica", "Especificação", "Justificativa de Engenharia"],
-        ["Frequência do Núcleo", "72 MHz (SYSCLK)", "Cristal HSE 8MHz com PLL x9."],
-        ["Clock do Periférico USB", "48 MHz (USBCLK)", "Prescaler PLL /1.5 obrigatório do USB Full-Speed."],
-        ["Varredura da Matriz", "Interrupção Timer TIM2", "Amostragem periódica a cada 10ms (100 Hz)."],
-        ["Debouncing Temporal", "40 ms por ISR", "Filtro temporal estabilizado sem atrasar a rotina USB."],
-        ["Compatibilidade de Chaves", "Switches MX Blue (3-pin)", "Garantida pelo encaixe mecânico 14x14mm."],
-        ["Roteamento PCB", "Face Simples (B.Cu)", "Facilita confecção manual por percloreto de ferro."],
-        ["Espessura das Trilhas", "0,8 mm a 1,2 mm", "Evita rompimento de cobre durante a corrosão artesanal."]
-    ]
-    t_limit = Table(limit_data, colWidths=[120, 140, 220])
-    t_limit.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), c_primary),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0,0), (-1,-1), 8),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#cbd5e1")),
-    ]))
-    story.append(t_limit)
-    story.append(Spacer(1, 10))
+    story.append(Paragraph("5.1 Projeto Eletrônico no KiCad (PCB Face Simples Manual)", style_h2))
+    story.append(Paragraph("A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétrico e do layout da placa de circuito impresso utilizando o software KiCad. Atendendo à solicitação do professor, o layout da placa foi desenvolvido exclusivamente na <b>camada inferior de cobre (<code>B.Cu</code> - Face Simples)</b>, facilitando o processo de confecção artesanal por transferência térmica. As trilhas foram engrossadas para larguras entre <b>0,8 mm (31,5 mils)</b> e <b>1,2 mm (47,2 mils)</b> com espaçamento de segurança de <b>0,5 mm</b>, eliminando riscos de rompimento ou curto-circuito na corrosão por Percloreto de Ferro.", style_body))
 
-    # 3. COMUNICAÇÃO BIDIRECIONAL
-    story.append(Paragraph("3. Comunicação Bidirecional USB Custom HID", style_h1))
-    story.append(Paragraph("O dispositivo atua como um controle de interface humana (Custom HID), estabelecendo comunicação bidirecional com o PC:", style_body))
-    story.append(Paragraph("1. <b>Canal IN (STM32 -> PC):</b> Envia relatórios de 8 Bytes contendo o código estendido da tecla (F13 = <code>0x68</code> até F21 = <code>0x70</code>).<br/>2. <b>Canal OUT (PC -> STM32):</b> O servidor Python (<code>app.py</code>) envia pacotes de retorno indicando o status do sistema (microfone mutado, cena do OBS ativa ou alarme), acionando respostas visuais no hardware.", style_body))
+    story.append(Paragraph("5.2 Configuração e Programação no STM32CubeMX", style_h2))
+    story.append(Paragraph("As portas GPIO foram configuradas da seguinte forma no STM32CubeMX:<br/>• <b>Linhas (LINE_1 a LINE_3):</b> Pinos PA1, PA2, PA3 configurados como <code>GPIO_MODE_OUTPUT_OD</code> (Open Drain).<br/>• <b>Colunas (COL_1 a COL_3):</b> Pinos PA4, PA5, PA6 configurados como <code>GPIO_MODE_INPUT</code> com <code>GPIO_PULLUP</code> interno.<br/>• <b>Comunicação USB HID:</b> Pinos PA11 (USB_DM) e PA12 (USB_DP) na classe Custom HID.<br/>• <b>Gravador SWD:</b> Pinos PA13 (SYS_JTMS-SWDIO) e PA14 (SYS_JTCK-SWCLK).", style_body))
+    story.append(Paragraph("A árvore de clock do sistema foi configurada utilizando o oscilador cristal externo (HSE) de 8 MHz com multiplicador PLL x9, resultando em uma frequência principal de <b>72 MHz (SYSCLK)</b>. Para o correto funcionamento do periférico USB Full-Speed (12 Mbps), aplicou-se o divisor dedicado USB de <b>/1.5</b>, gerando exatos <b>48 MHz (USBCLK)</b>.", style_body))
 
-    # 4. PCB FACE SIMPLES
-    story.append(Paragraph("4. PCB Face Simples para Confecção Manual", style_h1))
-    story.append(Paragraph("Atendendo à exigência de confecção física manual da placa pelo aluno:", style_body))
-    story.append(Paragraph("• <b>Camada Única (B.Cu):</b> Todo o roteamento foi alocado exclusivamente na camada de cobre inferior.<br/>• <b>Trilhas Reforçadas:</b> As trilhas possuem largura de <b>0,8 mm (31.5 mils)</b> para sinais e <b>1,2 mm (47.2 mils)</b> para alimentação.<br/>• <b>Pads Ampliados (Hand Soldering):</b> Ilhas de solda com diâmetro expandido para facilitar a perfuração com broca de 0,8mm e soldagem com ferro de solda comum.", style_body))
-
-    # 5. FIRMWARE
-    story.append(Paragraph("5. Firmware STM32 Baseado em Interrupção por Hardware", style_h1))
-    story.append(Paragraph("O programa principal foi completamente refatorado para eliminar o <i>polling</i> no loop <code>while(1)</code>. A varredura da matriz 3x3 e o filtro de debouncing são executados dentro da rotina de interrupção <code>HAL_TIM_PeriodElapsedCallback()</code> acionada pelo Timer TIM2 a cada 10ms (100 Hz).", style_body))
+    story.append(Paragraph("5.3 Varredura por Interrupção de Timer (TIM2)", style_h2))
+    story.append(Paragraph("Para atender integralmente à exigência de eliminar o polling no <code>while(1)</code>, o timer de hardware <b>TIM2</b> foi configurado com prescaler 7199 e período 99, gerando interrupções periódicas de hardware a cada <b>10 ms (100 Hz)</b>. A função <code>HAL_TIM_PeriodElapsedCallback()</code> executa a varredura e o debouncing de 40 ms. O loop principal no <code>main()</code> permanece 100% ocioso executando a instrução de baixo consumo <code>__WFI()</code>.", style_body))
 
     code_snippet = """// Trecho Principal do Firmware por Interrupcao (main.c)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
@@ -315,23 +300,28 @@ int main(void) {
     HAL_TIM_Base_Start_IT(&htim2); // Ativa Interrupcao TIM2 (100Hz)
 
     while (1) {
-        __WFI(); // CPU entra em Wait For Interrupt (Zero Polling)
+        __WFI(); // CPU em Idle (Wait For Interrupt)
     }
 }"""
     story.append(Paragraph(code_snippet.replace("\n", "<br/>").replace(" ", "&nbsp;"), style_code))
 
+    story.append(Paragraph("5.4 Montagem Física do Protótipo", style_h2))
+    story.append(Paragraph("Após a definição do circuito eletrônico e da programação do microcontrolador, foi realizada a montagem física do Stream Deck. Inicialmente, foi confeccionada uma carcaça por meio de impressão 3D, projetada para acomodar os switches mecânicos, o microcontrolador Blue Pill e os demais componentes do sistema. Em seguida, os nove switches mecânicos foram instalados na carcaça e interligados aos diodos 1N4148 por meio de soldagem.", style_body))
+
+    # =========================================================================
     # 6. CUSTOS
-    story.append(Paragraph("6. Análise de Custos do Protótipo", style_h1))
+    # =========================================================================
+    story.append(Paragraph("6. Análise de Custos", style_h1))
     custo_data = [
         ["Componente / Insumo", "Qtd", "Valor Unit. (R$)", "Valor Total (R$)"],
-        ["Switches Mecânicos Genéricos MX Blue (Mercado Livre)", "9", "2,84", "25,56"],
+        ["Switch Mecânico Genérico MX Blue (Mercado Livre)", "9", "2,84", "25,56"],
         ["Diodo de Sinal 1N4148", "9", "0,20", "1,80"],
         ["Microcontrolador STM32F103C8T6 (Blue Pill)", "1", "40,00", "40,00"],
-        ["Fios e Condutores de Conexão", "1,5m", "1,80", "2,70"],
-        ["Insertos Roscados M3 em Latão", "4", "0,65", "2,67"],
+        ["Fios de Ligação", "1,5m", "1,80 (1m)", "2,70"],
+        ["Inserto Roscado M3 em Latão", "4", "0,65", "2,67"],
         ["Fita Isolante Espumada", "1", "4,00", "4,00"],
-        ["Parafusos M3 x 8mm", "4", "0,50", "2,00"],
-        ["Carcaça Personalizada em Impressão 3D", "1", "50,00", "50,00"],
+        ["Parafuso M3 x 8mm", "4", "0,50", "2,00"],
+        ["Carcaça produzida em impressão 3D", "1", "50,00", "50,00"],
         ["CUSTO TOTAL DO PROTÓTIPO", "", "", "R$ 128,73"]
     ]
     t_custo = Table(custo_data, colWidths=[180, 40, 130, 130])
@@ -347,10 +337,12 @@ int main(void) {
     story.append(t_custo)
     story.append(Spacer(1, 15))
 
+    # =========================================================================
     # 7. CONCLUSÃO
+    # =========================================================================
     story.append(Paragraph("7. Conclusão", style_h1))
     conclusao_text = """
-    A reestruturação completa do projeto atendeu rigorosamente a todas as observações apontadas pela banca examinadora, especificando com clareza a compatibilidade mecânica dos switches (Cherry MX / Outemu Blue de 3 pinos), a arquitetura por <b>Interrupção de Timer de Hardware (TIM2 a 100 Hz)</b>, e a PCB em <b>face simples com trilhas de 0,8 mm a 1,2 mm</b>. O trabalho consolida de forma robusta e profissional todos os requisitos acadêmicos da disciplina de Sistemas Embarcados I da FEELT/UFU.
+    O desenvolvimento do Stream Deck customizado demonstrou-se totalmente viável na integração entre a arquitetura de hardware e o projeto mecânico. A utilização do microcontrolador STM32F103C8T6 (Blue Pill), configurado via STM32CubeMX e programado com <b>Interrupção de Timer de Hardware (TIM2 a 100 Hz)</b> para operar como um dispositivo USB HID com clock ajustado em 48 MHz, assegurou a comunicação nativa e o disparo imediato de atalhos e macros no computador sem o uso de <i>polling</i>. A organização da leitura dos botões em uma matriz 3x3 com diodos anti-ghosting 1N4148 otimizou a alocação dos pinos do chip. A PCB projetada em <b>face simples (<code>B.Cu</code>) com trilhas reforçadas de 0,8 mm a 1,2 mm</b> viabilizou a confecção artesanal. Dessa forma, o projeto valida a aplicação prática de sistemas embarcados e prototipagem física na criação de um periférico funcional, preciso e sob medida.
     """
     story.append(Paragraph(conclusao_text, style_body))
 
