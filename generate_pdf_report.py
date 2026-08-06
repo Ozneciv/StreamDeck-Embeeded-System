@@ -3,9 +3,10 @@
 ==============================================================================
  GERADOR DO RELATÓRIO TÉCNICO OFICIAL STREAM DECK UFU/FEELT (PDF)
 ==============================================================================
- Renderiza o documento PDF completo integrando todas as figuras do projeto
- (Fotos do Hardware, Montagem, KiCad PCB Face Simples B.Cu, STM32CubeMX,
- Interrupção de Timer TIM2 e tabelas de custos).
+ Renderiza o documento PDF completo (14 páginas) integrando todas as figuras
+ do projeto (Fotos do Hardware, Montagem, KiCad PCB Face Simples B.Cu,
+ STM32CubeMX, Interrupção de Timer TIM2, parágrafos ABNT com recuo de 1,25cm
+ e tabelas de custos).
 """
 
 import os
@@ -128,6 +129,7 @@ def build_pdf_report(pdf_filename):
         leading=13.5,
         textColor=c_text,
         alignment=4,
+        firstLineIndent=35, # Recuo ABNT de 1,25 cm
         spaceAfter=6
     )
 
@@ -171,14 +173,14 @@ def build_pdf_report(pdf_filename):
     story.append(Spacer(1, 45))
 
     story.append(HRFlowable(width="100%", thickness=1.5, color=c_primary, spaceBefore=0, spaceAfter=15))
-    story.append(Paragraph("RELATÓRIO TÉCNICO E MEMORIAL DESCRITIVO", style_cover_title))
+    story.append(Paragraph("RELATÓRIO TÉCNICO & MEMORIAL DESCRITIVO", style_cover_title))
     story.append(Paragraph("PROJETO STREAM DECK EMBARCADO COM VARREDURA POR INTERRUPÇÃO DE TIMER, PCB FACE SIMPLES E NATIVA USB HID", style_cover_sub))
     story.append(HRFlowable(width="100%", thickness=1.5, color=c_primary, spaceBefore=0, spaceAfter=45))
 
     team_data = [
         [
             Paragraph("<b>Discentes / Integrantes:</b><br/>• Gustavo Martins Ribeiro Moura — 12111ETE002<br/>• Matheus Henrique Gonçalves — 12311ECP021<br/>• Vicenzo De Marco Olivalves — 12421ECP006", ParagraphStyle('TLeft', fontName='Helvetica', fontSize=9.5, leading=14)),
-            Paragraph("<b>Docente Responsável:</b><br/>Prof. Jeovane Reges<br/><br/><b>Curso:</b><br/>Engenharia de Computação & Engenharia Eletrônica", ParagraphStyle('TRight', fontName='Helvetica', fontSize=9.5, leading=14))
+            Paragraph("<b>Docente Responsável:</b><br/>Prof. Jeovane Vicente de Sousa<br/><br/><b>Curso:</b><br/>Engenharia de Computação & Engenharia Eletrônica", ParagraphStyle('TRight', fontName='Helvetica', fontSize=9.5, leading=14))
         ]
     ]
     t_team = Table(team_data, colWidths=[240, 240])
@@ -254,15 +256,15 @@ def build_pdf_report(pdf_filename):
     story.append(Paragraph("A primeira etapa do desenvolvimento consistiu na elaboração do esquema elétrico e do layout da placa de circuito impresso utilizando o software KiCad. Atendendo à solicitação do professor, o layout da placa foi desenvolvido exclusivamente na <b>camada inferior de cobre (<code>B.Cu</code> - Face Simples)</b>, facilitando o processo de confecção artesanal por transferência térmica. As trilhas foram engrossadas para larguras entre <b>0,8 mm (31,5 mils)</b> e <b>1,2 mm (47,2 mils)</b> com espaçamento de segurança de <b>0,5 mm</b>, eliminando riscos de rompimento ou curto-circuito na corrosão por Percloreto de Ferro.", style_body))
 
     # Embed Images if present
-    hw_img_path = os.path.join(os.path.dirname(__file__), 'streamdeck_hardware.png')
-    assembly_img_path = os.path.join(os.path.dirname(__file__), 'streamdeck_assembly.jpg')
+    hw_img_path = os.path.join(os.path.dirname(__file__), 'emmaos.jpeg')
+    assembly_img_path = os.path.join(os.path.dirname(__file__), 'montage.jpg')
 
     if os.path.exists(hw_img_path):
-        story.append(Image(hw_img_path, width=340, height=255))
+        story.append(Image(hw_img_path, width=340, height=453))
         story.append(Paragraph("Figura 1 — Protótipo físico finalizado do Stream Deck em carcaça impressa 3D.", style_caption))
 
     if os.path.exists(assembly_img_path):
-        story.append(Image(assembly_img_path, width=340, height=255))
+        story.append(Image(assembly_img_path, width=340, height=453))
         story.append(Paragraph("Figura 2 — Processo de soldagem e montagem física dos switches mecânicos e diodos 1N4148.", style_caption))
 
     story.append(Paragraph("5.2 Configuração e Programação no STM32CubeMX", style_h2))
