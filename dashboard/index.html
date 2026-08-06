@@ -31,6 +31,10 @@
         <span class="icon">🔬</span> Análise Técnica
       </button>
       <div class="status-item">
+        <span class="status-label">Modo Leitura:</span>
+        <span class="status-value highlight" style="color: var(--accent-cyan);">TIM2 ISR 100Hz (Zero Polling)</span>
+      </div>
+      <div class="status-item">
         <span class="dot pulse-green"></span>
         <span class="status-label">HID Connection:</span>
         <span class="status-value" id="status-usb">Pronto (F13-F21 Active)</span>
@@ -82,6 +86,10 @@
           </div>
         </div>
         <div class="hex-info">
+          <span>Interrupção: <strong style="color: var(--accent-green);">TIM2 (100 Hz / 10ms ISR)</strong></span>
+          <span>Filtro Debounce: <strong style="color: var(--accent-cyan);">40 ms em ISR (Zero Polling __WFI)</strong></span>
+        </div>
+        <div class="hex-info" style="margin-top: 6px;">
           <span>HID Report Hex: <strong id="hex-code">0x00</strong></span>
           <span>USB Custom HID Class: <strong id="hid-class">Teclado Padrão (8-byte)</strong></span>
         </div>
@@ -109,13 +117,6 @@
             <div class="member-info">
               <span class="member-name">Gustavo Martins</span>
               <span class="member-id">12111ETE002</span>
-            </div>
-          </div>
-          <div class="team-member">
-            <div class="member-info">
-              <span class="member-name">Bruna Silva</span>
-              <span class="member-id">12021ETE007</span>
-            </div>
           </div>
         </div>
       </div>
@@ -201,26 +202,35 @@
             <div class="diagram-content">
               <div class="diag-block">
                 <h4>Core ARM Cortex-M3</h4>
-                <p>72 MHz Clock Speed</p>
-                <p>3.3V Logic Level</p>
+                <p>72 MHz SYSCLK / 48 MHz USB</p>
+                <p>Modo Repouso: __WFI()</p>
+              </div>
+              <div class="diag-arrow">➡️</div>
+              <div class="diag-block highlight-block" style="border-color: var(--accent-cyan);">
+                <h4>Timer TIM2 (ISR)</h4>
+                <p>Prescaler: 7199 (10 kHz tick)</p>
+                <p>Estouro: 99 (100 Hz / 10ms ISR)</p>
               </div>
               <div class="diag-arrow">➡️</div>
               <div class="diag-block highlight-block">
                 <h4>Matriz 3x3 (GPIO)</h4>
-                <p>Outputs: PA1, PA2, PA3 (Open Drain)</p>
-                <p>Inputs: PA4, PA5, PA6 (Pull-Up)</p>
+                <p>Outputs: PA1..PA3 (Open Drain)</p>
+                <p>Inputs: PA4..PA6 (Pull-Up)</p>
               </div>
               <div class="diag-arrow">➡️</div>
               <div class="diag-block">
                 <h4>USB Device Stack</h4>
-                <p>Custom HID Class (0x03)</p>
-                <p>Packet: 8 Bytes Key Report</p>
+                <p>Custom HID Class (8 Bytes)</p>
+                <p>Scancodes F13 a F21</p>
               </div>
             </div>
             <div class="code-snippet">
-              <pre><code>// Código enviado pela BluePill (Core/Src/main.c)
-hid_report[2] = 0x68 + tecla_id; // F13 (0x68) até F21 (0x70)
-USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, hid_report, 8);</code></pre>
+              <pre><code>// Interrupção de Hardware TIM2 (Core/Src/main.c)
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+    if (htim->Instance == TIM2) {
+        processDebounce_ISR(); // Varredura 100Hz + Debounce 40ms sem Polling
+    }
+}</code></pre>
             </div>
           </div>
         </div>
@@ -276,7 +286,7 @@ USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, hid_report, 8);</code></pre>
 
               <!-- Software Debouncing State Machine -->
               <div class="prof-card">
-                <h4>🛡️ Máquina de Estados do Debounce (40ms Window)</h4>
+                <h4>🛡️ Interrupção TIM2 & Debounce (100 Hz / 40ms)</h4>
                 <div class="stats-row">
                   <div class="stat-item">
                     <span class="stat-num" id="stat-bounces">0</span>
@@ -287,15 +297,15 @@ USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, hid_report, 8);</code></pre>
                     <span class="stat-lbl">Acionamentos Válidos</span>
                   </div>
                   <div class="stat-item">
-                    <span class="stat-num">40 ms</span>
-                    <span class="stat-lbl">Estabilidade (HAL_GetTick)</span>
+                    <span class="stat-num">10 ms</span>
+                    <span class="stat-lbl">Período ISR (TIM2)</span>
                   </div>
                 </div>
               </div>
 
               <!-- Memory & Clock Tree Specs -->
               <div class="prof-card">
-                <h4>⚙️ Registradores & Memória Flash/RAM</h4>
+                <h4>⚙️ Registradores de Hardware & Clocks</h4>
                 <div class="mem-bars">
                   <div class="mem-item">
                     <span>Flash (64 KB): 14.8 KB (23%)</span>
@@ -308,8 +318,10 @@ USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, hid_report, 8);</code></pre>
                 </div>
                 <div class="reg-tags">
                   <span class="reg-tag">SYSCLK: 72 MHz (HSE 8MHz * PLL 9)</span>
-                  <span class="reg-tag">USBCLK: 48 MHz (PLL / 1.5)</span>
-                  <span class="reg-tag">GPIOA_CRL: 0x44333333</span>
+                  <span class="reg-tag">TIM2 Prescaler: 7199 (10 kHz tick)</span>
+                  <span class="reg-tag">TIM2 ARR: 99 (100 Hz ISR)</span>
+                  <span class="reg-tag">NVIC: TIM2_IRQn (Prioridade 0)</span>
+                  <span class="reg-tag">CPU Mode: __WFI() Zero Polling</span>
                 </div>
               </div>
 
