@@ -124,7 +124,7 @@
 % RESUMO
 % ==============================================================================
 \section*{Resumo}
-\hspace*{1.25cm}Este relatório apresenta o desenvolvimento, implementação e validação de um periférico de entrada dedicado (\textit{Stream Deck / Macro Pad}) baseado no microcontrolador ARM Cortex-M3 (STM32F103C8T6 - Blue Pill). O dispositivo é composto por uma matriz 3x3 de teclas mecânicas acopladas a diodos anti-ghosting $1\text{N}4148$, operando nativamente como protocolo USB Custom HID (\textit{Human Interface Device}). O relatório especifica a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional). Em estrito atendimento às recomendações da banca, a arquitetura do firmware foi totalmente reformulada para operar \textbf{100\% sob Interrupção de Hardware por Timer (TIM2 a 100~Hz / 10~ms)} com filtro de debouncing por máquina de estados, desativação de \textit{polling} no loop principal via instrução \texttt{\_\_WFI()}, re-enumeração USB automática por software em \texttt{PA12}, otimizações no tamanho dos Endpoints de relatório USB HID para 8 Bytes e suporte à depuração ST-LINK em baixa potência (\texttt{DBGMCU}). Adicionalmente, a placa de circuito impresso (PCB) foi projetada no KiCad em \textbf{camada única (Face Simples \texttt{B.Cu})} com trilhas engrossadas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$, viabilizando a corrosão artesanal manual com Percloreto de Ferro.
+\hspace*{1.25cm}Este relatório apresenta o desenvolvimento, implementação e validação de um periférico de entrada dedicado (\textit{Stream Deck / Macro Pad}) baseado no microcontrolador ARM Cortex-M3 (STM32F103C8T6 - Blue Pill). O dispositivo é composto por uma matriz 3x3 de teclas mecânicas acopladas a diodos anti-ghosting $1\text{N}4148$, operando nativamente como protocolo USB Custom HID (\textit{Human Interface Device}). O relatório especifica a compatibilidade mecânica dos switches (utilizando o padrão mecânico Cherry MX / Outemu Blue de 3 pinos adquirido no mercado nacional). Em estrito atendimento às recomendações da banca, a arquitetura do firmware foi totalmente reformulada para operar \textbf{100\% sob Interrupção de Hardware por Timer (TIM2 a 100~Hz / 10~ms)} com filtro de debouncing por máquina de estados, desativação de \textit{polling} no loop principal via instrução \texttt{\_\_WFI()}, re-enumeração USB automática por software em \texttt{PA12}, otimizaciones no tamanho dos Endpoints de relatório USB HID para 8 Bytes e suporte à depuração ST-LINK em baixa potência (\texttt{DBGMCU}). Adicionalmente, a placa de circuito impresso (PCB) foi projetada no KiCad em \textbf{camada única (Face Simples \texttt{B.Cu})} com trilhas engrossadas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$, viabilizando a corrosão artesanal manual com Percloreto de Ferro.
 
 \textbf{Palavras-chave:} Sistemas Embarcados, STM32F103C8T6, USB Custom HID, Interrupção por Timer (TIM2), Re-enumeração USB, PCB Face Simples.
 
@@ -235,6 +235,18 @@ Outro aspecto importante do projeto é a integração entre os componentes mecâ
 \end{subfigure}
 \caption{Visualização 3D da Placa de Circuito Impresso no KiCad (Vista Superior e Inferior).}
 \label{fig:pcb_3d_novas_lado_a_lado}
+\end{figure}
+
+% --- LAYOUT 2D DAS TRILHAS B.CU (NOVA IMAGEM KICAD) ---
+\begin{figure}[H]
+\centering
+\IfFileExists{pcb_layout_2d.png}{
+  \includegraphics[width=0.75\textwidth]{pcb_layout_2d.png}
+}{
+  \IfFileExists{pcb_layout_kicad.png}{\includegraphics[width=0.75\textwidth]{pcb_layout_kicad.png}}{\includegraphics[width=0.75\textwidth]{streamdeck_assembly.jpg}}
+}
+\caption{Layout de roteamento em camada única (Face Simples \texttt{B.Cu}) com trilhas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$ no KiCad.}
+\label{fig:layout2d_kicad_dark}
 \end{figure}
 
 \subsection{Configuração do Timer TIM2 e NVIC no STM32CubeMX}
