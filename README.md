@@ -35,22 +35,6 @@ Projeto prático desenvolvido para a disciplina de **Sistemas Embarcados I** da 
 
 ---
 
-## 🎛️ Projeto Eletrônico e Placa de Circuito Impresso (KiCad)
-
-<div align="center">
-
-| 📐 Vista 3D Superior (Diodos e Soquetes MX) | ⚡ Vista 3D Inferior (Roteamento B.Cu) |
-| :---: | :---: |
-| ![PCB 3D Superior](pcb_top_3d.png) | ![PCB 3D Inferior](pcb_bottom_3d.png) |
-
-</div>
-
-### 🔍 Layout 2D de Roteamento em Camada Única (`B.Cu`)
-
-![Layout 2D KiCad](pcb_layout_2d.png)
-
----
-
 ## ⚡ Arquitetura do Firmware e Interrupção TIM2
 
 O firmware foi totalmente projetado para eliminar o uso ineficiente de *polling* e atrasos de software no loop principal:
