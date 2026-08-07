@@ -1,102 +1,142 @@
-# 🎛️ StreamDeck-Embeeded-System
+# ⌨️ StreamDeck Embedded System — STM32F103C8T6 (Blue Pill)
 
-<p align="center">
-  <img src="streamdeck_hardware.png" alt="StreamDeck Hardware STM32 BluePill Pronto" height="380" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); margin-right: 12px; vertical-align: middle;">
-  <img src="streamdeck_assembly.jpg" alt="StreamDeck Processo de Montagem e Soldagem" height="380" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); vertical-align: middle;">
-</p>
+[![STM32](https://img.shields.io/badge/Microcontroller-STM32F103C8T6-003569?style=flat-square&logo=stmicroelectronics)](https://www.st.com)
+[![USB HID](https://img.shields.io/badge/USB-Custom_HID_Class-007acc?style=flat-square&logo=usb)](https://www.usb.org)
+[![Timer Interrupt](https://img.shields.io/badge/Architecture-TIM2_ISR_100Hz-22c55e?style=flat-square)](#-arquitetura-do-firmware-e-interrupção-tim2)
+[![PCB KiCad](https://img.shields.io/badge/PCB-Single_Layer_B.Cu-e11d48?style=flat-square&logo=kicad)](https://www.kicad.org)
+[![UFU / FEELT](https://img.shields.io/badge/University-UFU_FEELT-1e3a8a?style=flat-square)](https://www.feelt.ufu.br)
 
-<p align="center">
-  <strong>Macro Pad Físico de 9 Botões baseado em STM32F103C8T6 (BluePill) e USB Custom HID</strong><br>
-  Varredura por <strong>Interrupção de Timer de Hardware (TIM2 a 100 Hz)</strong> e <strong>PCB Face Simples Manual (B.Cu)</strong><br>
-  Interface de controle e simulação desenvolvida em <strong>Python 3 (Tkinter / Web Engine)</strong><br>
-  Projeto acadêmico para a disciplina de <strong>Sistemas Embarcados I</strong><br>
-  <strong>FEELT</strong> — Faculdade de Engenharia Elétrica | <strong>UFU</strong> — Universidade Federal de Uberlândia
-</p>
+Projeto prático desenvolvido para a disciplina de **Sistemas Embarcados I** da **Faculdade de Engenharia Elétrica (FEELT)** da **Universidade Federal de Uberlândia (UFU)**, sob orientação do **Prof. Jeovane Vicente de Sousa**.
 
 ---
 
-## 👥 Integrantes do Projeto
+## 📸 Fotos do Protótipo Finalizado & Montagem Física
+
+<div align="center">
+
+| 🚀 Protótipo Final em Carcaça 3D | 🛠️ Montagem Física e Fiação Interna |
+| :---: | :---: |
+| ![Stream Deck - Protótipo Final](Projeto%20Pronto.jpeg) | ![Montagem Interna](Montagem.jpeg) |
+
+</div>
+
+---
+
+## 🛠️ Especificações Técnicas de Engenharia
+
+- **Microcontrolador:** ARM Cortex-M3 (STM32F103C8T6 - Blue Pill @ 72 MHz SYSCLK).
+- **Interface USB:** USB Full-Speed 12 Mbps nativa com clock dedicado de 48 MHz (USBCLK).
+- **Matriz de Teclas:** Matriz 3x3 (9 teclas mecânicas padrão Cherry MX / Outemu Blue de 3 pinos com encaixe $14\,\text{mm} \times 14\,\text{mm}$).
+- **Anti-Ghosting:** 9 diodos de sinal $1\text{N}4148$ integrados em cada chave.
+- **Arquitetura de Firmware:** **100% direcionada a Interrupção de Hardware por Timer (TIM2 a 100 Hz / 10 ms)** com filtro de debouncing de 40 ms por máquina de estados e desativação de *polling* no loop principal (`while(1)` ocioso com `__WFI()`).
+- **Re-enumeração USB por Software:** Pulso de reset de 100 ms na linha USB D+ (`PA12`) na inicialização para forçar a identificação imediata no Windows/Linux após gravações no ST-LINK.
+- **PCB KiCad:** Placa de Circuito Impresso em **Camada Única (Face Simples `B.Cu`)** com trilhas engrossadas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$ para confecção por corrosão artesanal manual com Percloreto de Ferro.
+- **Gabinete & Teclas:** Carcaça impressa em 3D (arquivos STL inclusos), insertos roscados M3 em latão e parafusos M3x8mm.
+
+---
+
+## 🎛️ Projeto Eletrônico e Placa de Circuito Impresso (KiCad)
+
+<div align="center">
+
+| 📐 Vista 3D Superior (Diodos e Soquetes MX) | ⚡ Vista 3D Inferior (Roteamento B.Cu) |
+| :---: | :---: |
+| ![PCB 3D Superior](pcb_top_3d.png) | ![PCB 3D Inferior](pcb_bottom_3d.png) |
+
+</div>
+
+### 🔍 Layout 2D de Roteamento em Camada Única (`B.Cu`)
+
+![Layout 2D KiCad](pcb_layout_2d.png)
+
+---
+
+## ⚡ Arquitetura do Firmware e Interrupção TIM2
+
+O firmware foi totalmente projetado para eliminar o uso ineficiente de *polling* e atrasos de software no loop principal:
+
+```c
+/**
+ * @brief Callback de Interrupção do Timer TIM2 (100 Hz / 10ms)
+ * @details Executa a varredura da matriz 3x3 e debouncing não-bloqueante de 40ms em ISR.
+ */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+    if (htim->Instance == TIM2) {
+        int current_key = scanMatrix_ISR();
+        if (current_key != last_raw_key) {
+            sample_ticks = HAL_GetTick();
+            last_raw_key = current_key;
+        }
+        if ((HAL_GetTick() - sample_ticks) >= 40) {
+            if (current_key != stable_valid_key) {
+                stable_valid_key = current_key;
+                uint8_t hid_report[8] = {0};
+                if (stable_valid_key != -1) {
+                    hid_report[2] = 0x68 + stable_valid_key; // Scancodes F13 a F21
+                }
+                USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, hid_report, 8);
+            }
+        }
+    }
+}
+
+int main(void) {
+    HAL_Init();
+    SystemClock_Config();
+
+    /* Reset forçado de software no pino USB D+ (PA12) para re-enumeração no Windows */
+    GPIO_InitTypeDef GPIO_InitStruct_USB = {0};
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    GPIO_InitStruct_USB.Pin = GPIO_PIN_12;
+    GPIO_InitStruct_USB.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct_USB.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct_USB);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
+    HAL_Delay(100);
+
+    /* Habilita depuração SWD do ST-LINK mesmo com CPU em modo repouso __WFI */
+    HAL_DBGMCU_EnableDBGSleepMode();
+
+    MX_GPIO_Init();
+    MX_USB_DEVICE_Init();
+    MX_TIM2_Init();
+
+    HAL_TIM_Base_Start_IT(&htim2); // Ativa Interrupção TIM2 (100 Hz)
+
+    while (1) {
+        __WFI(); // CPU adormecida em baixo consumo (Wait For Interrupt)
+    }
+}
+```
+
+---
+
+## 📊 Estrutura do Repositório
+
+```text
+├── Projeto Pronto.jpeg         # Foto do protótipo finalizado em carcaça 3D
+├── Montagem.jpeg               # Foto da fiação interna e soldagem dos diodos
+├── StreamDeck_SEMB.pdf         # Relatório Técnico Oficial & Memorial Descritivo (PDF)
+├── relatorio_streamdeck.tex    # Código-fonte completo em LaTeX (Overleaf)
+├── generate_pdf_report.py      # Script de compilação automatizada em Python
+├── streamdeck bluepill/        # Código-fonte C STM32CubeIDE & Projeto CubeMX (.ioc)
+├── PCB/                        # Projeto do KiCad e Gerbers da PCB Face Simples
+├── PCB_FINAL/                  # Arquivos finais da PCB KiCad e Gerbers atualizados
+├── dashboard/                  # Dashboard interativo web (HTML5/JS) para telemetria
+├── *.stl                       # Arquivos de modelagem 3D para impressão do gabinete
+└── README.md                   # Documentação oficial do projeto
+```
+
+---
+
+## 👥 Equipe de Desenvolvimento (Discentes)
 
 | Nome | Matrícula | Curso |
 | :--- | :---: | :---: |
-| **Vicenzo De Marco Olivalves** | `12421ECP006` | Engenharia de Computação |
-| **Bruna de Jesus Silva** | `12021ETE007` | Engenharia Eletrônica |
 | **Gustavo Martins Ribeiro Moura** | `12111ETE002` | Engenharia Eletrônica |
 | **Mateus Henrique Gonçalves** | `12311ECP021` | Engenharia de Computação |
+| **Vicenzo De Marco Olivalves** | `12421ECP006` | Engenharia de Computação |
 
----
-
-## 📌 Visão Geral do Projeto
-
-O **StreamDeck-Embeeded-System** é um dispositivo de entrada físico (*Macro Pad*) composto por uma matriz 3x3 de chaves mecânicas soldadas manualmente em uma placa de circuito impresso de **face simples (Single-Layer B.Cu)** com trilhas reforçadas ($0.8\,\text{mm}$ a $1.2\,\text{mm}$) otimizada para corrosão manual. O controle do sistema é realizado pelo microcontrolador **STM32F103C8T6 (ARM Cortex-M3 @ 72 MHz)** executando um firmware em C de baixo nível no **STM32CubeIDE**.
-
-### 🚀 Diferenciais de Firmware & Hardware:
-* ⚡ **Zero Polling no Loop Principal:** O firmware opera 100% sob **Interrupção de Hardware por Timer (TIM2 a 100 Hz / 10 ms)** com `HAL_TIM_PeriodElapsedCallback()`. A CPU permanece em modo de baixo consumo `__WFI()` (Wait For Interrupt) quando ociosa.
-* 🛡️ **Debouncing por Máquina de Estados:** Filtro temporal não-bloqueante de 40 ms executado diretamente dentro da rotina de interrupção ISR.
-* 🏬 **PCB Face Simples para Confecção Manual:** Roteamento em camada única (`B.Cu`) com trilhas espessas de $0.8\,\text{mm}$ a $1.2\,\text{mm}$, projetado para o método artesanal de transferência térmica e corrosão em Percloreto de Ferro.
-* 🔄 **Comunicação USB HID Bidirecional:** Transmissão de pacotes IN (scancodes F13 a F21) e recepção de pacotes OUT do hospedeiro para atualização de status em tempo real.
-* 📄 **Relatório Técnico em LaTeX:** Relatório acadêmico completo nos padrões UFU/FEELT (`relatorio_streamdeck.tex` e `RELATORIO_STREAMDECK_UFU.pdf`).
-
----
-
-## 🛠️ Especificações Técnicas de Hardware & Firmware
-
-* **Microcontrolador:** STM32F103C8T6 (ARM Cortex-M3, 32-bit).
-* **Frequência da CPU (SYSCLK):** 72 MHz (Cristal HSE 8 MHz × PLL 9).
-* **Frequência USB (USBCLK):** 48 MHz (Divisor PLL 1.5).
-* **Topologia de Entrada:** Matriz Multiplexada 3x3 (3 Linhas Open Drain × 3 Colunas PullUp).
-* **Interrupção de Hardware:** Timer TIM2 configurado com prescaler 7199 (10 kHz tick) e período 99 (100 Hz / 10 ms ISR).
-* **Debouncing:** Filtro temporal por máquina de estados em ISR (janela de 40 ms).
-* **Pacote USB HID:** Relatório padrão de 8 Bytes (Byte 2 = `0x68 + tecla_id`).
-
----
-
-## 🏬 Placa de Circuito Impresso (PCB Face Simples KiCad)
-
-O projeto inclui a placa de circuito impresso desenvolvida no **KiCad**, localizada no diretório [`PCB/PCB_macropad/`](file:///c:/Users/vicen/Downloads/streamdeck/PCB/PCB_macropad):
-
-* 📄 **Esquemático Eletrônico (PDF):** [`PCB/PCB_macropad/sch_macropad_plote.pdf`](file:///c:/Users/vicen/Downloads/streamdeck/PCB/PCB_macropad/sch_macropad_plote.pdf)
-* 📐 **Arquivos de Projeto KiCad:** `PCB_macropad.kicad_sch` e `PCB_macropad.kicad_pcb`
-* 🏭 **Gerber Files para Fabricação:** Pasta [`PCB/PCB_macropad/gerber/`](file:///c:/Users/vicen/Downloads/streamdeck/PCB/PCB_macropad/gerber).
-
----
-
-## 🐍 Como Executar a Interface Python
-
-A aplicação de acompanhamento é executada via **Python 3**:
-
-```bash
-python app.py
-```
-
----
-
-## 📂 Estrutura do Repositório
-
-```text
-StreamDeck-Embeeded-System/
-├── relatorio_streamdeck.tex   # Relatório Técnico em LaTeX (Formatação ABNT / UFU / IEEE)
-├── RELATORIO_STREAMDECK_UFU.pdf # Relatório impresso em PDF pronto para submissão
-├── app.py                    # Aplicação de Servidor em Python 3
-├── streamdeck bluepill/      # Projeto em C no STM32CubeIDE (Firmware com Interrupção TIM2)
-│   ├── Core/
-│   │   ├── Inc/              # Cabeçalhos main.h, usb_device.h, etc.
-│   │   └── Src/
-│   │       ├── main.c        # Firmware com TIM2 ISR, debouncing e USB HID
-│   │       └── ...
-│   ├── USB_DEVICE/           # Pilha USB Device Custom HID da ST
-│   └── streamdeck bluepill.ioc # Configuração do projeto no STM32CubeMX
-├── PCB/                      # Projeto da PCB Face Simples para confecção manual (KiCad)
-│   └── PCB_macropad/
-│       ├── PCB_macropad.kicad_pcb # Layout Single-Layer B.Cu com trilhas de 0.8mm
-│       └── gerber/           # Gerbers para corrosão manual
-├── dashboard/                # Interface Gráfica da Aplicação Python
-├── streamdeck_hardware.png   # Foto do hardware finalizado
-└── streamdeck_assembly.jpg   # Foto do processo de soldagem e montagem
-```
-
----
-
-<p align="center">
-  Desenvolvido com 💙 pela equipe de Engenharia da <strong>FEELT / UFU</strong> — 2026.
-</p>
+**Docente Responsável:** Prof. Jeovane Vicente de Sousa  
+**Instituição:** Universidade Federal de Uberlândia (UFU) — Faculdade de Engenharia Elétrica (FEELT)  
+**Ano:** 2026
