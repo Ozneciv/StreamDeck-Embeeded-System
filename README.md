@@ -48,10 +48,9 @@ Este repositório contém o código-fonte do firmware em C (STM32CubeIDE), proje
 
 ```text
 ├── streamdeck bluepill/        # Projeto STM32CubeIDE (Firmware C e arquivo .ioc)
-├── PCB/                        # Esquemático e Layout da PCB no KiCad (Versão 1)
 ├── PCB_FINAL/                  # Arquivos de fabricação KiCad e Gerbers finais
+├── 3D/                         # Arquivos e modelos 3D STL do gabinete e teclas
 ├── dashboard/                  # Painel web interativo para testes e telemetria
-├── *.stl                       # Modelos 3D para impressão do gabinete e teclas
 ├── StreamDeck_SEMB.pdf         # Relatório Técnico & Memorial Descritivo (PDF)
 ├── relatorio_streamdeck.tex    # Código-fonte em LaTeX do relatório
 └── README.md                   # Documentação do projeto
@@ -74,6 +73,7 @@ Este repositório contém o código-fonte do firmware em C (STM32CubeIDE), proje
 
 ## 👥 Equipe (Discentes / FEELT UFU)
 
+- **Bruna de Jesus Silva** — `12021ETE007`
 - **Gustavo Martins Ribeiro Moura** — `12111ETE002`
 - **Mateus Henrique Gonçalves** — `12311ECP021`
 - **Vicenzo De Marco Olivalves** — `12421ECP006`

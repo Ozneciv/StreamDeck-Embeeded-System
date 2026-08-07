@@ -1,0 +1,193 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- PACOTES PRINCIPAIS ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage{indentfirst}
+\usepackage{microtype}
+
+\setlength{\parindent}{1.25cm}
+
+% --- CORES E ESTILOS ---
+\definecolor{primaryblue}{RGB}{35, 38, 121}
+\definecolor{codebg}{RGB}{248, 250, 252}
+\definecolor{codekeyword}{RGB}{0, 102, 204}
+\definecolor{codecomment}{RGB}{34, 139, 34}
+\definecolor{codestring}{RGB}{210, 105, 30}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primaryblue,
+    citecolor=primaryblue,
+    urlcolor=primaryblue
+}
+
+\lstset{
+    language=C,
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{codekeyword}\bfseries,
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codestring},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{black!20},
+    tabsize=2
+}
+
+% --- CABEÇALHO E RODAPÉ ---
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\footnotesize \textcolor{primaryblue}{\textbf{FEELT/UFU — Resumo de Embedded C}}}
+\lhead{\footnotesize \textcolor{gray}{Sistemas Embarcados I}}
+\rfoot{\thepage}
+
+\begin{document}
+
+% ==============================================================================
+% CAPA DO RELATÓRIO
+% ==============================================================================
+\begin{titlepage}
+    \centering
+    
+    {\bfseries \Large UNIVERSIDADE FEDERAL DE UBERLÂNDIA}\\[0.2cm]
+    {\bfseries \large FACULDADE DE ENGENHARIA ELÉTRICA — FEELT}\\[0.1cm]
+    {\small DISCIPLINA DE SISTEMAS EMBARCADOS I}\\[2.0cm]
+
+    {\color{primaryblue}\rule{\linewidth}{1.0pt}}\\[0.4cm]
+    {\Large \bfseries \color{primaryblue} RESUMO TÉCNICO E CONCEITUAL}\\[0.3cm]
+    {\normalsize \bfseries PROGRAMAÇÃO EM C PARA SISTEMAS EMBARCADOS (EMBEDDED C) VS. COMPUTADORES}\\[0.4cm]
+    {\color{primaryblue}\rule{\linewidth}{1.0pt}}\\[2.5cm]
+
+    \begin{minipage}{0.5\textwidth}
+        \begin{flushleft} \large
+            \textbf{Discente:}\\[0.2cm]
+            Vicenzo De Marco Olivalves\\[0.1cm]
+            Matrícula: \texttt{12421ECP006}
+        \end{flushleft}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \begin{flushright} \large
+            \textbf{Docente Responsável:}\\[0.2cm]
+            Prof. Jeovane Vicente de Sousa\\[0.4cm]
+            \textbf{Curso:}\\
+            Engenharia de Computação
+        \end{flushright}
+    \end{minipage}
+
+    \vfill
+    {\large \bfseries Uberlândia — MG}\\[0.2cm]
+    {\large 2026}
+\end{titlepage}
+
+% ==============================================================================
+% RESUMO / APRESENTAÇÃO
+% ==============================================================================
+\section*{Apresentação}
+\hspace*{1.25cm}Este documento apresenta o resumo dos conceitos abordados nas videoaulas de \textit{Embedded C} (Partes 1 e 2) da disciplina de Sistemas Embarcados I da FEELT/UFU, ministrada pelo Prof. Jeovane Vicente de Sousa. O objetivo é discutir detalhadamente as particularidades da linguagem C quando aplicada ao desenvolvimento de firmware para microcontroladores (como o ARM Cortex-M3 / STM32F103), destacando as diferenças fundamentais em relação à programação C convencional para computadores de mesa (\textit{desktops}), além de revisar tópicos essenciais como manipulação de registradores por operações bitwise, qualificadores de memória, estruturas, ponteiros e mapeamento de memória.
+
+\newpage
+\tableofcontents
+\newpage
+
+% ==============================================================================
+% 1. INTRODUÇÃO
+% ==============================================================================
+\section{Introdução}
+\hspace*{1.25cm}Quando aprendemos a programar em C nos primeiros semestres do curso de Engenharia de Computação, geralmente escrevemos códigos que rodam sobre um Sistema Operacional (Windows, Linux ou macOS). Nesse ambiente, o sistema operacional abstrai o acesso ao hardware, gerencia a memória RAM de forma virtualizada e oferece uma quantidade quase ilimitada de recursos computacionais.
+
+Porém, quando passamos para o desenvolvimento de Sistemas Embarcados (\textit{Embedded C}), a realidade muda completamente. Na maioria das vezes, trabalhamos no modo \textit{Bare-Metal} (sem sistema operacional), onde o nosso código roda diretamente sobre o silício do microcontrolador. Nesse contexto, o programador é o responsável direto por configurar cada pino de GPIO, ajustar os seletores de clock, inicializar os timers e manipular registradores específicos diretamente pelo endereço de memória física.
+
+% ==============================================================================
+% 2. DIFERENÇAS ENTRE C PARA COMPUTADORES E EMBEDDED C
+% ==============================================================================
+\section{Diferenças Fundamentais: C Convencional vs. Embedded C}
+\hspace*{1.25cm}Abaixo estão destacadas as principais diferenças práticas que foram observadas durante o estudo das videoaulas e na prática de bancada com microcontroladores:
+
+\begin{enumerate}
+    \item \textbf{Acesso Direto à Memória e Registradores (MMIO):} No PC, tentar acessar um endereço de memória física aleatório causa uma falha de segmentação (\textit{Segmentation Fault}) barrada pelo SO. Em sistemas embarcados, a manipulação da placa é feita justamente apontando ponteiros diretamente para os endereços dos registradores mapeados em memória (\textit{Memory-Mapped I/O}).
+    \item \textbf{Gerenciamento de Recursos (RAM e Flash):} Em um computador comum, temos gigabytes de RAM. No microcontrolador STM32F103C8T6 (Blue Pill), por exemplo, temos apenas $20\,\text{kB}$ de SRAM e $64\,\text{kB}$ de memória Flash. Alocação dinâmica de memória via \texttt{malloc()} e \texttt{free()} deve ser evitada ao máximo para não causar fragmentação de memória ou estouro de pilha (\textit{stack overflow}).
+    \item \textbf{Ciclo de Vida do Programa e Loop Infinito:} Em C para PC, a função \texttt{main()} executa uma sequência de instruções e encerra retornando \texttt{0} para o SO. Em embarcados, o \texttt{main()} **nunca pode retornar**; após a inicialização dos periféricos, o código entra em um loop infinito (\texttt{while(1)}) para manter o dispositivo operando continuamente ou em repouso com instrução de baixo consumo (\texttt{\_\_WFI()}).
+    \item \textbf{Determinismo de Tempo Real e Interrupções:} Enquanto no PC os programas disputam tempo de CPU via escalonador do SO, no microcontrolador eventos críticos de hardware acionam rotinas de interrupção (\textit{Interrupt Service Routines} — ISR) tratadas instantaneamente via controlador de interrupção (ex.: NVIC no ARM Cortex-M).
+\end{enumerate}
+
+% ==============================================================================
+% 3. REVISÃO DOS CONCEITOS E APLICAÇÕES PRÁTICAS
+% ==============================================================================
+\section{Revisão Sistemática dos Conceitos de Linguagem C}
+
+\subsection{Variáveis, Escopo e Qualificadores Especiais}
+\hspace*{1.25cm}A escolha correta dos qualificadores de variáveis é crítica no desenvolvimento de firmware:
+
+\begin{itemize}
+    \item \texttt{volatile}: O professor deu um grande destaque a este qualificador. Ele avisa ao compilador que o valor da variável pode ser alterado a qualquer momento fora do fluxo normal do código (por uma interrupção de hardware ou pela alteração física de um registrador). O \texttt{volatile} impede que o compilador faça otimizações indesejadas, como salvar o valor da variável em um registrador interno da CPU em vez de reler a RAM.
+    \item \texttt{const}: Informa que o valor da variável não pode ser alterado. Em microcontroladores, declarar vetores grandes ou tabelas como \texttt{const} faz com que eles fiquem salvos diretamente na memória **Flash ROM**, economizando a escassa memória RAM.
+    \item \texttt{static}: Quando aplicada a uma variável local, preserva seu valor entre chamadas sucessivas da função. Quando aplicada a uma variável global ou função, limita o seu escopo apenas ao arquivo \texttt{.c} onde foi declarada (encapsulamento de módulo).
+\end{itemize}
+
+\subsection{Tipos Inteiros de Tamanho Fixo (\texttt{stdint.h})}
+\hspace*{1.25cm}Na programação embarcada, usar tipos genéricos como \texttt{int} pode gerar problemas graves de portabilidade, pois o tamanho em bytes do \texttt{int} muda conforme a arquitetura (pode ter 16 bits em um microcontrolador AVR de 8 bits ou 32 bits em um ARM). 
+
+Por isso, utilizamos sempre a biblioteca \texttt{<stdint.h>}, declarando tipos de tamanho fixo bem definidos: \texttt{uint8\_t} (8 bits sem sinal), \texttt{uint16\_t} (16 bits sem sinal) e \texttt{uint32\_t} (32 bits sem sinal). Isso bate exatamente com o tamanho dos registradores do STM32 (que são de 32 bits).
+
+\subsection{Operações Lógicas Bit a Bit (Bitwise Operators)}
+\hspace*{1.25cm}Para alterar a configuração de um registrador de hardware sem modificar os outros bits que já estão configurados, usamos os operadores bitwise (\texttt{\&}, \texttt{|}, \texttt{\^{}}, \texttt{\~{}}, \texttt{<<}, \texttt{>>}):
+
+\begin{lstlisting}
+// Exemplo pratico de escrita em registradores via Bitwise:
+#define GPIOA_ODR  (*((volatile uint32_t*) 0x4001080C))
+
+// 1. SETAR (Ligar) o bit 5 (PA5 = HIGH) mantendo os outros intactos
+GPIOA_ODR |= (1U << 5);
+
+// 2. CLEAR (Desligar) o bit 5 (PA5 = LOW)
+GPIOA_ODR &= ~(1U << 5);
+
+// 3. TOGGLE (Inverter o estado) do bit 5
+GPIOA_ODR ^= (1U << 5);
+
+// 4. MASK (Testar se o pino PA5 esta em nivel alto)
+if (GPIOA_ODR & (1U << 5)) {
+    // Pino acionado!
+}
+\end{lstlisting}
+
+\subsection{Estruturas (\texttt{struct}), Unióes (\texttt{union}) e Enumerações (\texttt{enum})}
+\begin{itemize}
+    \item \textbf{Estruturas (\texttt{struct}):} Permitem criar abstrações completas de periféricos. A biblioteca ST HAL, por exemplo, mapeia o bloco de registradores do GPIO criando uma \texttt{struct} cujos membros correspondem exatamente ao deslocamento (\textit{offset}) dos registradores na memória.
+    \item \textbf{Unióes (\texttt{union}):} Fazem com que diferentes membros compartilhem a mesma posição física de memória. São muito úteis para fatiar um número de 32 bits (\texttt{uint32\_t}) em 4 bytes individuais (\texttt{uint8\_t}) na hora de enviar dados pela porta serial ou USB, sem precisar fazer deslocamentos de bit manuais.
+    \item \textbf{Enumerações (\texttt{enum}):} Essenciais para criar Máquinas de Estados Finitos (\textit{Finite State Machines} — FSM). Deixam o código do firmware muito mais legível para controlar os estados do sistema (ex.: \texttt{enum State \{IDLE, DEBOUNCING, SEND\_USB\};}).
+\end{itemize}
+
+\subsection{Ponteiros e Mapeamento de Memória (MMIO)}
+\hspace*{1.25cm}Em C para sistemas embarcados, um ponteiro nada mais é do que a ferramenta usada para acessar o hardware. O mapa de memória do ARM Cortex-M3 associa cada periférico a um endereço base. Convertendo um valor hexadecimal de endereço para um ponteiro (\texttt{volatile uint32\_t*}) e fazendo a desreferenciação (\texttt{*}), conseguimos ler e escrever no pino físico da placa em tempo real.
+
+Além disso, os **ponteiros para função** são amplamente utilizados para implementar a tabela de vetores de interrupção (que aponta para o endereço inicial da rotina ISR que deve ser executada quando chega um sinal externo) e para configurar callbacks dinâmicos na biblioteca HAL (como o \texttt{HAL\_TIM\_PeriodElapsedCallback()}).
+
+\subsection{Macros e Pré-processador}
+\hspace*{1.25cm}O uso de macros (\texttt{\#define}) traz maior abstração e legibilidade ao firmware, permitindo renomear pinos de hardware (ex.: \texttt{\#define LED\_PIN GPIO\_PIN\_13}) e criar travas contra inclusão múltipla de cabeçalhos (\textit{Include Guards}: \texttt{\#ifndef \_MAIN\_H ... \#endif}).
+
+% ==============================================================================
+% 4. CONCLUSÃO
+% ==============================================================================
+\section{Conclusão}
+\hspace*{1.25cm}O estudo detalhado das videoaulas de \textit{Embedded C} permitiu compreender com clareza as diferenças práticas entre desenvolver software de aplicação para PC e firmware para microcontroladores. A programação em sistemas embarcados exige uma postura muito mais rigorosa em relação ao uso de memória, controle de tempo e manipulação de registradores a nível de bits.
+
+Dominar o uso de tipos de tamanho fixo (\texttt{stdint.h}), o qualificador \texttt{volatile}, a manipulação bitwise e o mapeamento de memória por ponteiros e estruturas é indispensável para construir sistemas embarcados robustos, previsíveis e eficientes para o mercado de engenharia.
+
+\end{document}
